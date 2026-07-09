@@ -5,269 +5,226 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Dashboard Penyerapan AKI UPP Sulawesi Tengah 2026</title>
 
-<!-- ================= LIBRARIES (CDN) ================= -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 
 <style>
 /* =====================================================================
-   KONFIGURASI WARNA & TEMA  (ubah di sini untuk mengganti tampilan)
+   PALET WARNA — gaya konsultan (McKinsey / BCG), latar cerah & ergonomis
    ===================================================================== */
 :root{
-  --bg-0:#040a16;            /* latar paling gelap */
-  --bg-1:#08152b;            /* latar gradien */
-  --panel:rgba(14,27,52,.66);/* kartu glass */
-  --panel-2:rgba(10,20,40,.85);
-  --border:rgba(70,140,230,.22);
-  --border-glow:rgba(60,160,255,.55);
+  --bg:#EDF1F6;               /* latar cerah */
+  --card:#FFFFFF;
+  --ink:#0C2233;             /* teks utama, kontras tinggi */
+  --ink-soft:#41556B;
+  --muted:#8090A2;
+  --line:#E3E9F1;
+  --line-2:#EEF2F7;
 
-  --pln-blue:#005BAC;        /* biru korporat PLN */
-  --plan:#38bdf8;            /* BIRU  = Plan */
-  --real:#22e39a;            /* HIJAU = Realisasi */
-  --cyan:#38e6ff;            /* aksen neon */
-  --warn:#ffb02e;            /* kuning = warning */
-  --crit:#ff4d6d;            /* merah  = critical */
-  --gold:#ffd54a; --silver:#cfe0f0; --bronze:#e39b62;
+  --navy:#0E3A5C;            /* aksen korporat gelap */
+  --plan:#2E6FB7;            /* BIRU  = Plan */
+  --real:#1B9E77;            /* HIJAU = Realisasi */
+  --sisa:#D6DEE8;            /* abu netral = sisa */
+  --amber:#D6982B;           /* warning */
+  --red:#C6483C;             /* critical */
 
-  --text:#eaf3ff;
-  --muted:#8ba6cc;
-  --radius:18px;
+  --radius:14px;
+  --shadow:0 1px 2px rgba(16,40,64,.05), 0 6px 20px rgba(16,40,64,.06);
+  --shadow-sm:0 1px 2px rgba(16,40,64,.06);
 }
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
 body{
-  font-family:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
-  color:var(--text);
+  font-family:'Inter',"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+  color:var(--ink);
   background:
-    radial-gradient(1200px 700px at 12% -10%, rgba(0,120,220,.22), transparent 60%),
-    radial-gradient(900px 600px at 95% 0%, rgba(0,220,180,.12), transparent 55%),
-    linear-gradient(160deg,var(--bg-1),var(--bg-0) 70%);
+    radial-gradient(1100px 500px at 100% -5%, #E1EBF6, transparent 60%),
+    linear-gradient(180deg,#F2F6FB, var(--bg));
   background-attachment:fixed;
-  min-height:100vh;
-  padding:16px;
-  overflow-x:hidden;
+  min-height:100vh;padding:18px;overflow-x:hidden;
+  font-variant-numeric:tabular-nums;
 }
-/* motif sirkuit/grid halus di latar */
-body::before{
-  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
-  background-image:
-    linear-gradient(rgba(90,160,255,.05) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(90,160,255,.05) 1px,transparent 1px);
-  background-size:44px 44px;
-  -webkit-mask-image:radial-gradient(120% 120% at 50% 0%,#000 40%,transparent 100%);
-          mask-image:radial-gradient(120% 120% at 50% 0%,#000 40%,transparent 100%);
-}
-.wrap{position:relative;z-index:1;max-width:1600px;margin:0 auto}
+.wrap{max-width:1500px;margin:0 auto}
+h1,h2,h3{font-family:Georgia,'Times New Roman',serif}
 
 /* ============================ HEADER ============================ */
 .header{
-  display:flex;align-items:center;gap:16px;
-  background:linear-gradient(120deg,rgba(0,60,120,.55),rgba(8,20,40,.55));
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:14px 20px;
-  backdrop-filter:blur(10px);
-  box-shadow:0 0 0 1px rgba(60,160,255,.06),0 12px 40px rgba(0,0,0,.45),inset 0 0 30px rgba(40,140,255,.06);
-  margin-bottom:16px;
+  display:flex;align-items:center;gap:16px;background:var(--card);
+  border:1px solid var(--line);border-radius:var(--radius);padding:16px 22px;
+  box-shadow:var(--shadow);position:relative;overflow:hidden;
 }
-.header .logo-pln{height:56px;width:auto;flex:none;
-  filter:drop-shadow(0 0 8px rgba(255,255,255,.15))}
-.header .logo-dan{height:34px;width:auto;flex:none;
-  background:#fff;border-radius:8px;padding:4px 8px}
-.header .titlebox{flex:1;min-width:0;text-align:center}
-.header .titlebox h1{
-  margin:0;font-size:clamp(15px,2.3vw,27px);font-weight:800;letter-spacing:.4px;
-  color:#fff;text-shadow:0 0 18px rgba(56,230,255,.45);line-height:1.15;
-}
-.header .titlebox .sub{
-  margin-top:3px;font-size:clamp(10px,1.1vw,13px);color:var(--cyan);
-  letter-spacing:2px;text-transform:uppercase;font-weight:600
-}
-.header .rightbox{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
-.datechip{
-  font-size:12px;color:var(--text);white-space:nowrap;
-  background:rgba(0,0,0,.25);border:1px solid var(--border);
-  padding:6px 12px;border-radius:999px
-}
-.datechip b{color:var(--cyan)}
-.refresh-btn{
-  display:inline-flex;align-items:center;gap:6px;cursor:pointer;
-  font-size:11px;font-weight:600;color:#dff;
-  background:rgba(56,230,255,.12);border:1px solid rgba(56,230,255,.4);
-  padding:6px 12px;border-radius:999px;transition:.2s
-}
-.refresh-btn:hover{background:rgba(56,230,255,.25);box-shadow:0 0 14px rgba(56,230,255,.4)}
+.header::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--navy)}
+.header .logo-pln{height:52px;width:auto;flex:none}
+.header .logo-dan{height:30px;width:auto;flex:none}
+.header .titlebox{flex:1;min-width:0}
+.header h1{margin:0;font-size:clamp(16px,2.1vw,26px);font-weight:700;color:var(--navy);
+  letter-spacing:.2px;line-height:1.18}
+.header .sub{margin-top:3px;font-size:12px;color:var(--muted);letter-spacing:.6px;
+  text-transform:uppercase;font-weight:600;font-family:'Inter',sans-serif}
+.header .rightbox{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:9px}
+.datechip{font-size:12px;color:var(--ink-soft);white-space:nowrap;background:var(--line-2);
+  border:1px solid var(--line);padding:6px 12px;border-radius:8px;font-weight:500}
+.datechip b{color:var(--navy)}
+.refresh-btn{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;
+  font-weight:600;color:var(--plan);background:#EAF2FB;border:1px solid #CFE0F2;
+  padding:6px 12px;border-radius:8px;transition:.15s;font-family:'Inter',sans-serif}
+.refresh-btn:hover{background:#DCEBFA}
 .refresh-btn.spin svg{animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ============================ SECTIONS ============================ */
-.section{margin:22px 0}
-.section-title{
-  display:flex;align-items:center;gap:10px;margin:0 4px 12px;
-  font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--cyan)
-}
-.section-title::before{content:"";width:8px;height:8px;border-radius:50%;
-  background:var(--cyan);box-shadow:0 0 10px var(--cyan),0 0 22px var(--cyan)}
-.section-title::after{content:"";flex:1;height:1px;
-  background:linear-gradient(90deg,var(--border-glow),transparent)}
+/* ============================ FILTER BAR ============================ */
+.filters{position:sticky;top:8px;z-index:20;margin:16px 0;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(8px);
+  border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px;
+  box-shadow:var(--shadow);display:flex;flex-wrap:wrap;gap:18px 30px;align-items:center}
+.fgroup{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.flabel{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--muted)}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;
+  color:var(--ink-soft);background:#fff;border:1px solid var(--line);
+  padding:8px 14px;border-radius:999px;transition:.15s;min-height:34px}
+.pill:hover{border-color:var(--plan);color:var(--plan)}
+.pill.active{background:var(--navy);border-color:var(--navy);color:#fff;
+  box-shadow:0 2px 8px rgba(14,58,92,.25)}
+.monthsel{display:flex;gap:5px;flex-wrap:wrap;width:100%;padding-top:4px;
+  border-top:1px dashed var(--line);margin-top:2px}
+.mpill{font-family:'Inter',sans-serif;font-size:11.5px;font-weight:600;cursor:pointer;
+  color:var(--ink-soft);background:#fff;border:1px solid var(--line);
+  padding:5px 11px;border-radius:7px;transition:.12s}
+.mpill:hover{border-color:var(--real)}
+.mpill.active{background:var(--real);border-color:var(--real);color:#fff}
+.mpill.has-data{border-color:#BFE3D6}
+.mpill.has-data::after{content:"•";color:var(--real);margin-left:4px}
+.mpill.active.has-data::after{color:#fff}
 
-/* kartu dasar (glassmorphism + neon) */
-.card{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:16px;
-  backdrop-filter:blur(9px);
-  box-shadow:0 10px 32px rgba(0,0,0,.4),inset 0 0 0 1px rgba(255,255,255,.02);
-  position:relative;overflow:hidden;
-}
-.card::after{content:"";position:absolute;left:0;top:0;height:3px;width:100%;
-  background:linear-gradient(90deg,var(--cyan),transparent 70%);opacity:.7}
+/* ============================ BLOCKS ============================ */
+.block{margin:20px 0}
+.block-title{display:flex;align-items:baseline;gap:10px;margin:0 2px 12px}
+.block-title h2{margin:0;font-size:17px;font-weight:700;color:var(--navy);letter-spacing:.2px}
+.block-title .desc{font-size:12px;color:var(--muted);font-family:'Inter',sans-serif}
+.context-note{font-size:12.5px;color:var(--ink-soft);font-family:'Inter',sans-serif;
+  margin:0 2px 14px;font-weight:500}
+.context-note b{color:var(--navy)}
+.context-note .chip{display:inline-block;background:#EAF2FB;color:var(--plan);
+  border:1px solid #CFE0F2;padding:2px 9px;border-radius:999px;font-weight:600;font-size:11.5px}
 
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px;box-shadow:var(--shadow-sm)}
 .grid{display:grid;gap:14px}
 .g4{grid-template-columns:repeat(4,1fr)}
-.g3{grid-template-columns:repeat(3,1fr)}
-.g2{grid-template-columns:repeat(2,1fr)}
+.g2{grid-template-columns:1.05fr .95fr}
 
-/* KPI card */
-.kpi{display:flex;flex-direction:column;gap:8px}
-.kpi .kpi-top{display:flex;align-items:center;gap:10px}
-.kpi .ic{width:40px;height:40px;flex:none;border-radius:12px;display:grid;place-items:center;
-  background:rgba(56,230,255,.1);border:1px solid rgba(56,230,255,.28)}
-.kpi .ic svg{width:22px;height:22px}
-.kpi .label{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.3px}
-.kpi .value{font-size:clamp(18px,2.2vw,26px);font-weight:800;letter-spacing:.3px;line-height:1.1}
-.kpi .value.plan{color:var(--plan);text-shadow:0 0 16px rgba(56,189,248,.4)}
-.kpi .value.real{color:var(--real);text-shadow:0 0 16px rgba(34,227,154,.4)}
-.kpi .value.cyan{color:var(--cyan);text-shadow:0 0 16px rgba(56,230,255,.45)}
-.kpi .value.warn{color:var(--warn)}
-.kpi .foot{font-size:11px;color:var(--muted)}
+/* KPI */
+.kpi{position:relative;overflow:hidden}
+.kpi .bar{position:absolute;left:0;top:0;bottom:0;width:4px}
+.kpi .label{font-family:'Inter',sans-serif;font-size:11.5px;font-weight:600;
+  letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.kpi .value{font-size:clamp(20px,2.3vw,28px);font-weight:800;color:var(--ink);line-height:1}
+.kpi .value.p{color:var(--plan)} .kpi .value.r{color:var(--real)}
+.kpi .foot{font-family:'Inter',sans-serif;font-size:11.5px;color:var(--muted);margin-top:8px}
 
-/* gauge & progress */
-.gauge-wrap{display:flex;align-items:center;justify-content:center;gap:26px;flex-wrap:wrap}
-.gauge{position:relative;width:190px;height:190px;flex:none}
-.gauge svg{transform:rotate(-90deg);filter:drop-shadow(0 0 8px rgba(56,230,255,.5))}
-.gauge .center{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
-.gauge .center .big{font-size:38px;font-weight:800;color:var(--real);
-  text-shadow:0 0 22px rgba(34,227,154,.55)}
-.gauge .center .lbl{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
-.pbar-block{flex:1;min-width:220px}
-.pbar-block .row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px}
-.pbar{height:16px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden;
-  border:1px solid var(--border)}
-.pbar > i{display:block;height:100%;border-radius:999px;
-  background:linear-gradient(90deg,var(--real),var(--cyan));
-  box-shadow:0 0 16px rgba(34,227,154,.6);transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
-.bigpct{font-size:clamp(30px,6vw,58px);font-weight:800;color:var(--real);text-align:center;
-  text-shadow:0 0 28px rgba(34,227,154,.5);margin-top:10px;line-height:1}
-.bigpct small{display:block;font-size:12px;color:var(--muted);letter-spacing:2px;
-  text-transform:uppercase;text-shadow:none;font-weight:600;margin-top:6px}
+/* Progress */
+.prog-wrap{display:flex;align-items:center;gap:30px;flex-wrap:wrap}
+.donut-box{width:170px;height:170px;flex:none;position:relative}
+.prog-right{flex:1;min-width:230px}
+.prog-right .big{font-size:clamp(34px,6vw,52px);font-weight:800;color:var(--real);line-height:1}
+.prog-right .big small{font-family:'Inter',sans-serif;font-size:13px;color:var(--muted);
+  font-weight:600;display:block;margin-top:6px;letter-spacing:.3px}
+.pbar{height:14px;border-radius:999px;background:var(--line);overflow:hidden;margin:16px 0 6px;
+  border:1px solid var(--line)}
+.pbar > i{display:block;height:100%;border-radius:999px;background:var(--real);
+  transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.prow{display:flex;justify-content:space-between;font-family:'Inter',sans-serif;font-size:13px;
+  padding:7px 0;border-bottom:1px solid var(--line-2)}
+.prow:last-child{border-bottom:none}
+.prow .k{color:var(--ink-soft)} .prow .v{font-weight:700}
+.prow .v.p{color:var(--plan)} .prow .v.r{color:var(--real)}
 
-/* panel kategori & semester */
-.panel-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.panel-head .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex:none}
-.panel-head .ic svg{width:22px;height:22px}
-.panel-head .nm{font-size:15px;font-weight:800}
-.panel-head .tag{margin-left:auto;font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px}
-.mini-donut{width:120px;height:120px;margin:2px auto 6px}
-.kv{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;
-  border-bottom:1px dashed rgba(120,160,220,.14)}
-.kv:last-child{border-bottom:none}
-.kv .k{color:var(--muted)}
-.kv .v{font-weight:700}
-.kv .v.plan{color:var(--plan)} .kv .v.real{color:var(--real)}
-.kv .v.cyan{color:var(--cyan)} .kv .v.muted{color:var(--muted)}
-.pbar.sm{height:10px;margin-top:10px}
+/* chart boxes */
+.chart-box{position:relative;width:100%;height:360px}
+.chart-box.cat{height:260px}
 
-/* chart containers */
-.chart-box{position:relative;width:100%;height:340px}
-.chart-box.tall{height:380px}
-
-/* ranking */
-.rank-row{display:flex;align-items:center;gap:14px;margin:12px 0}
-.rank-row .medal{font-size:26px;width:34px;text-align:center;flex:none;
-  filter:drop-shadow(0 0 6px rgba(255,210,80,.5))}
-.rank-row .rk-name{width:130px;flex:none;font-weight:700;font-size:13px}
-.rank-row .rk-bar{flex:1;height:22px;border-radius:999px;background:rgba(255,255,255,.06);
-  border:1px solid var(--border);overflow:hidden;position:relative}
-.rank-row .rk-bar > i{display:block;height:100%;
-  background:linear-gradient(90deg,var(--real),var(--cyan));
-  box-shadow:0 0 16px rgba(34,227,154,.6);transition:width 1.1s ease}
-.rank-row .rk-pct{width:72px;flex:none;text-align:right;font-weight:800;color:var(--real)}
+/* Top disbursement */
+.top-row{display:flex;align-items:center;gap:14px;margin:11px 0}
+.top-row .rk{width:26px;height:26px;flex:none;border-radius:7px;display:grid;place-items:center;
+  font-family:'Inter',sans-serif;font-weight:800;font-size:12px;color:#fff;background:var(--navy)}
+.top-row .rk.g1{background:#C9A227} .top-row .rk.g2{background:#8896A6} .top-row .rk.g3{background:#B07A46}
+.top-row .nm{flex:1;min-width:0}
+.top-row .nm .t{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-row .nm .cat{font-family:'Inter',sans-serif;font-size:11px;color:var(--muted)}
+.top-row .bar{flex:1.4;height:16px;border-radius:8px;background:var(--line-2);overflow:hidden}
+.top-row .bar > i{display:block;height:100%;background:var(--real);border-radius:8px;
+  transition:width .9s ease}
+.top-row .amt{width:120px;flex:none;text-align:right;font-family:'Inter',sans-serif;
+  font-size:13px;font-weight:700;color:var(--ink)}
+.top-empty{font-family:'Inter',sans-serif;color:var(--muted);font-size:13px;padding:8px 2px}
 
 /* table */
 .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
-thead th{
-  text-align:right;padding:12px 14px;font-size:11px;letter-spacing:1px;text-transform:uppercase;
-  color:var(--cyan);border-bottom:1px solid var(--border-glow);white-space:nowrap
-}
+table{width:100%;border-collapse:collapse;font-family:'Inter',sans-serif;font-size:13px;min-width:560px}
+thead th{text-align:right;padding:12px 14px;font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;
+  color:var(--muted);border-bottom:2px solid var(--line);white-space:nowrap;font-weight:700}
 thead th:first-child{text-align:left}
-tbody td{padding:12px 14px;text-align:right;border-bottom:1px solid rgba(120,160,220,.1);white-space:nowrap}
-tbody td:first-child{text-align:left;font-weight:700}
-tbody tr:hover{background:rgba(56,160,255,.06)}
-tbody tr.total-row{background:rgba(0,91,172,.22)}
-tbody tr.total-row td{font-weight:800;color:#fff;border-top:1px solid var(--border-glow)}
-.cell-plan{color:var(--plan)} .cell-real{color:var(--real)}
-.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:800}
+tbody td{padding:12px 14px;text-align:right;border-bottom:1px solid var(--line-2);white-space:nowrap}
+tbody td:first-child{text-align:left;font-weight:600;color:var(--ink)}
+tbody tr:hover{background:#F6F9FC}
+tbody tr.total td{font-weight:800;color:var(--navy);border-top:2px solid var(--line);
+  background:#F3F7FB}
+.c-plan{color:var(--plan);font-weight:600} .c-real{color:var(--real);font-weight:600}
+.dotcat{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:8px;vertical-align:middle}
 
-/* executive KPI grid */
+/* exec strip */
 .exec-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.exec{padding:14px 15px}
-.exec .lbl{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.3px;
-  display:flex;align-items:center;gap:6px;margin-bottom:8px}
-.exec .lbl svg{width:15px;height:15px;opacity:.85}
-.exec .val{font-size:clamp(16px,1.8vw,22px);font-weight:800;line-height:1.1}
-.exec .note{font-size:11px;color:var(--muted);margin-top:5px}
-.status-dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px}
-.s-green{background:var(--real);box-shadow:0 0 10px var(--real)}
-.s-yellow{background:var(--warn);box-shadow:0 0 10px var(--warn)}
-.s-red{background:var(--crit);box-shadow:0 0 10px var(--crit)}
-.txt-green{color:var(--real)} .txt-yellow{color:var(--warn)} .txt-red{color:var(--crit)}
-.txt-plan{color:var(--plan)} .txt-cyan{color:var(--cyan)}
+.exec .label{font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:.5px;
+  text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.exec .val{font-size:clamp(17px,1.9vw,22px);font-weight:800;line-height:1}
+.exec .note{font-family:'Inter',sans-serif;font-size:11.5px;color:var(--muted);margin-top:7px}
+.status{display:inline-flex;align-items:center;gap:8px}
+.status .dot{width:11px;height:11px;border-radius:50%}
+.s-green{color:var(--real)} .s-green .dot{background:var(--real)}
+.s-amber{color:var(--amber)} .s-amber .dot{background:var(--amber)}
+.s-red{color:var(--red)} .s-red .dot{background:var(--red)}
+.t-plan{color:var(--plan)} .t-navy{color:var(--navy)} .t-amber{color:var(--amber)}
 
-/* footer */
-.footer{margin:26px 0 10px;text-align:center;color:var(--muted);font-size:12px;
-  display:flex;align-items:center;justify-content:center;gap:8px}
-.footer .uic{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;
-  background:rgba(56,230,255,.12);border:1px solid rgba(56,230,255,.35)}
-.footer b{color:var(--text)}
-
-/* status banner (loading / error) */
-.banner{padding:14px 18px;border-radius:12px;margin-bottom:14px;font-size:13px;
-  border:1px solid var(--border);background:var(--panel-2);display:none}
+/* footer & banner */
+.footer{margin:26px 0 12px;text-align:center;color:var(--muted);font-size:12px;
+  font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px}
+.footer b{color:var(--ink)}
+.banner{font-family:'Inter',sans-serif;padding:12px 16px;border-radius:10px;margin-bottom:14px;
+  font-size:13px;border:1px solid var(--line);background:#fff;display:none;box-shadow:var(--shadow-sm)}
 .banner.show{display:block}
-.banner.err{border-color:var(--crit);color:#ffd7de;background:rgba(120,20,40,.25)}
-.banner.load{border-color:var(--cyan);color:#cffaff}
-.banner .retry{margin-left:10px;text-decoration:underline;cursor:pointer;color:#fff}
+.banner.err{border-color:var(--red);color:#8a2b22;background:#FBEDEB}
+.banner.load{border-color:#CFE0F2;color:var(--plan);background:#EFF6FC}
+.banner .retry{margin-left:8px;text-decoration:underline;cursor:pointer;color:var(--navy);font-weight:600}
 
-/* ======================== RESPONSIVE / MOBILE ======================== */
-@media(max-width:1100px){
+/* ======================== RESPONSIVE ======================== */
+@media(max-width:1000px){
   .g4{grid-template-columns:repeat(2,1fr)}
+  .g2{grid-template-columns:1fr}
   .exec-grid{grid-template-columns:repeat(2,1fr)}
 }
-@media(max-width:820px){
-  .g3{grid-template-columns:1fr}
-  .g2{grid-template-columns:1fr}
-}
-@media(max-width:640px){
-  body{padding:10px}
-  .header{flex-wrap:wrap;gap:10px;padding:12px}
-  .header .titlebox{order:3;flex-basis:100%;text-align:left}
+@media(max-width:600px){
+  body{padding:11px}
+  .header{flex-wrap:wrap;gap:10px;padding:13px 15px}
+  .header .titlebox{order:3;flex-basis:100%}
   .header .rightbox{order:2;margin-left:auto}
-  .header .logo-pln{height:44px}
+  .filters{gap:12px 18px;padding:11px 13px;top:6px}
+  .pill{font-size:12px;padding:7px 12px}
+  .chart-box{height:320px}
+  .top-row .amt{width:92px;font-size:12px}
+  .top-row .bar{flex:1}
+}
+@media(max-width:420px){
   .g4{grid-template-columns:1fr 1fr}
   .exec-grid{grid-template-columns:1fr 1fr}
-  .chart-box{height:300px}
-  .gauge{width:160px;height:160px}
-  .rank-row .rk-name{width:92px;font-size:12px}
-  .rank-row .rk-pct{width:56px}
-}
-@media(max-width:400px){
-  .g4{grid-template-columns:1fr}
-  .exec-grid{grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -292,488 +249,439 @@ tbody tr.total-row td{font-weight:800;color:#fff;border-top:1px solid var(--bord
     </div>
   </div>
 
+  <!-- ============================ FILTER BAR ============================ -->
+  <div class="filters">
+    <div class="fgroup">
+      <span class="flabel">Kategori</span>
+      <div class="pills" id="filKategori">
+        <button class="pill active" data-v="ALL">Overall</button>
+        <button class="pill" data-v="TANAH">Pertanahan</button>
+        <button class="pill" data-v="KIT">Pembangkit</button>
+        <button class="pill" data-v="JAR">Jaringan</button>
+      </div>
+    </div>
+    <div class="fgroup">
+      <span class="flabel">Waktu</span>
+      <div class="pills" id="filWaktu">
+        <button class="pill" data-v="month">Per Bulan</button>
+        <button class="pill" data-v="sem1">Semester 1</button>
+        <button class="pill" data-v="sem2">Semester 2</button>
+        <button class="pill active" data-v="overall">Overall (1 Tahun)</button>
+      </div>
+    </div>
+    <div class="monthsel" id="monthSel"></div>
+  </div>
+
   <div class="banner load show" id="banner">Memuat data dari Google Sheets…</div>
 
-  <!-- ==================== SECTION 1 : PLAN VS REAL OVERALL ==================== -->
-  <div class="section">
-    <div class="section-title">Section 1 &middot; Plan vs Real Overall</div>
-    <div class="grid g4" style="margin-bottom:14px">
-      <div class="card kpi">
-        <div class="kpi-top">
-          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
-          <div class="label">Total Plan AKI</div>
-        </div>
-        <div class="value plan" id="k_plan">—</div>
-        <div class="foot">Kebutuhan AKI 2026</div>
-      </div>
-      <div class="card kpi">
-        <div class="kpi-top">
-          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#22e39a" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></div>
-          <div class="label">Total Realisasi AKI</div>
-        </div>
-        <div class="value real" id="k_real">—</div>
-        <div class="foot">Realisasi berjalan</div>
-      </div>
-      <div class="card kpi">
-        <div class="kpi-top">
-          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#38e6ff" stroke-width="2"><path d="M12 2v20M2 12h20" opacity=".3"/><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
-          <div class="label">Persentase Realisasi</div>
-        </div>
-        <div class="value cyan" id="k_pct">—</div>
-        <div class="foot">Realisasi / Plan</div>
-      </div>
-      <div class="card kpi">
-        <div class="kpi-top">
-          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#ffb02e" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M8 4v4"/></svg></div>
-          <div class="label">Sisa Plan</div>
-        </div>
-        <div class="value warn" id="k_sisa">—</div>
-        <div class="foot">Belum terserap</div>
-      </div>
-    </div>
+  <!-- context -->
+  <div class="context-note" id="contextNote"></div>
 
-    <div class="card">
-      <div class="gauge-wrap">
-        <div class="gauge">
-          <svg width="190" height="190" viewBox="0 0 190 190">
-            <circle cx="95" cy="95" r="80" stroke="rgba(255,255,255,.08)" stroke-width="16" fill="none"/>
-            <circle id="gaugeArc" cx="95" cy="95" r="80" stroke="url(#gg)" stroke-width="16" fill="none"
-                    stroke-linecap="round" stroke-dasharray="502.6" stroke-dashoffset="502.6"/>
-            <defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#22e39a"/><stop offset="1" stop-color="#38e6ff"/>
-            </linearGradient></defs>
-          </svg>
-          <div class="center"><div><div class="big" id="gaugePct">0%</div><div class="lbl">Realisasi</div></div></div>
+  <!-- ============================ KPI ============================ -->
+  <div class="block">
+    <div class="grid g4">
+      <div class="card kpi"><span class="bar" style="background:var(--plan)"></span>
+        <div class="label">Total Plan AKI</div><div class="value p" id="k_plan">—</div>
+        <div class="foot" id="k_plan_f">Kebutuhan AKI</div></div>
+      <div class="card kpi"><span class="bar" style="background:var(--real)"></span>
+        <div class="label">Realisasi AKI</div><div class="value r" id="k_real">—</div>
+        <div class="foot">Penyerapan berjalan</div></div>
+      <div class="card kpi"><span class="bar" style="background:var(--navy)"></span>
+        <div class="label">Persentase Realisasi</div><div class="value" id="k_pct">—</div>
+        <div class="foot">Realisasi / Plan</div></div>
+      <div class="card kpi"><span class="bar" style="background:var(--amber)"></span>
+        <div class="label">Sisa Plan</div><div class="value t-amber" id="k_sisa">—</div>
+        <div class="foot">Belum terserap</div></div>
+    </div>
+  </div>
+
+  <!-- ============================ PROGRESS + CATEGORY ============================ -->
+  <div class="block">
+    <div class="grid g2">
+      <div class="card">
+        <div class="block-title" style="margin-bottom:16px"><h2>Progress Penyerapan</h2></div>
+        <div class="prog-wrap">
+          <div class="donut-box"><canvas id="donut"></canvas></div>
+          <div class="prog-right">
+            <div class="big" id="bigPct">0%<small>Realisasi terhadap Plan AKI</small></div>
+            <div class="pbar"><i id="pbFill" style="width:0%"></i></div>
+            <div class="prow"><span class="k">Plan AKI</span><span class="v p" id="pr_plan">—</span></div>
+            <div class="prow"><span class="k">Realisasi</span><span class="v r" id="pr_real">—</span></div>
+            <div class="prow"><span class="k">Sisa</span><span class="v" id="pr_sisa">—</span></div>
+          </div>
         </div>
-        <div class="pbar-block">
-          <div class="row"><span>Progress Penyerapan AKI</span><span id="pbLabel">0%</span></div>
-          <div class="pbar"><i id="pbFill" style="width:0%"></i></div>
-          <div class="bigpct" id="bigPct">0,00%<small>Total Realisasi AKI 2026</small></div>
-        </div>
+      </div>
+      <div class="card">
+        <div class="block-title" style="margin-bottom:6px"><h2>Perbandingan Kategori</h2>
+          <span class="desc">Plan vs Realisasi</span></div>
+        <div class="chart-box cat"><canvas id="catChart"></canvas></div>
       </div>
     </div>
   </div>
 
-  <!-- ==================== SECTION 2 : PENYERAPAN PER KATEGORI ==================== -->
-  <div class="section">
-    <div class="section-title">Section 2 &middot; Penyerapan per Kategori</div>
-    <div class="grid g3" id="catPanels"><!-- diisi JS: Jaringan, Pembangkit, Pertanahan --></div>
+  <!-- ============================ MONTHLY STACKED ============================ -->
+  <div class="block">
+    <div class="block-title"><h2>Plan vs Realisasi per Bulan</h2>
+      <span class="desc" id="monthlyDesc">Proporsi realisasi terhadap plan tiap bulan (%)</span></div>
+    <div class="card"><div class="chart-box"><canvas id="monthlyChart"></canvas></div></div>
   </div>
 
-  <!-- ==================== SECTION 3 : SPLIT PER SEMESTER ==================== -->
-  <div class="section">
-    <div class="section-title">Section 3 &middot; Plan vs Real per Semester</div>
-    <div class="grid g2" id="semPanels"><!-- diisi JS --></div>
+  <!-- ============================ TOP DISBURSEMENT ============================ -->
+  <div class="block">
+    <div class="block-title"><h2>Top Disbursement</h2>
+      <span class="desc" id="topDesc">Proyek dengan realisasi terbesar</span></div>
+    <div class="card" id="topBox"></div>
   </div>
 
-  <!-- ==================== SECTION 4 : PLAN VS REAL PER BULAN ==================== -->
-  <div class="section">
-    <div class="section-title">Section 4 &middot; Plan vs Realisasi per Bulan</div>
-    <div class="card"><div class="chart-box tall"><canvas id="monthlyChart"></canvas></div></div>
-  </div>
-
-  <!-- ==================== SECTION 5 : TOP 3 REALISASI TERBAIK ==================== -->
-  <div class="section">
-    <div class="section-title">Section 5 &middot; Top 3 Realisasi Terbaik</div>
-    <div class="card" id="rankBox"><!-- diisi JS --></div>
-  </div>
-
-  <!-- ==================== SECTION 6 : RINGKASAN DATA ==================== -->
-  <div class="section">
-    <div class="section-title">Section 6 &middot; Ringkasan Data</div>
+  <!-- ============================ RINGKASAN TABLE ============================ -->
+  <div class="block">
+    <div class="block-title"><h2>Ringkasan Data</h2>
+      <span class="desc" id="tableDesc"></span></div>
     <div class="card"><div class="tbl-wrap"><table>
-      <thead><tr>
-        <th>Kategori</th><th>Plan AKI</th><th>Realisasi AKI</th><th>% Realisasi</th><th>Sisa Plan</th>
-      </tr></thead>
+      <thead><tr><th>Kategori</th><th>Plan AKI</th><th>Realisasi AKI</th><th>% Realisasi</th><th>Sisa Plan</th></tr></thead>
       <tbody id="tableBody"></tbody>
     </table></div></div>
   </div>
 
-  <!-- ==================== SECTION 7 : EXECUTIVE KPI ==================== -->
-  <div class="section">
-    <div class="section-title">Section 7 &middot; Executive KPI</div>
-    <div class="exec-grid" id="execGrid"><!-- diisi JS --></div>
+  <!-- ============================ EXEC ============================ -->
+  <div class="block">
+    <div class="block-title"><h2>Indikator Eksekutif</h2></div>
+    <div class="exec-grid" id="execGrid"></div>
   </div>
 
   <!-- ============================ FOOTER ============================ -->
   <div class="footer">
-    <span class="uic"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#38e6ff" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span>
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--muted)" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
     Created by : <b>Samuel Guhan</b>
   </div>
 </div>
 
 <script>
 /* =====================================================================
-   KONFIGURASI  —  ubah di sini bila sumber data / kategori berubah
+   KONFIGURASI — ubah di sini bila sumber data / kategori berubah
    ===================================================================== */
 const CONFIG = {
-  // URL CSV Google Sheets (Publish to web -> CSV). Ganti bila sheet berganti.
-  csvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQNlKtlF7EzuHJtD744U8_5UveQYnIkK6Ee97ovMUW0crSm5FrhObqiokX-ibi5Qyvsy7SrgvYI4NVo/pub?output=csv",
-
-  refreshMs: 5 * 60 * 1000,   // auto-refresh tiap 5 menit
-  dataYear: 2026,
-
-  // Nama kolom pada spreadsheet (sesuaikan bila header diubah)
-  col: {
-    kategori: "BPO UIP",              // KIT / JAR / TANAH
-    planAki:  "Kebutuhan AKI 2026",   // Plan AKI per baris
-    realAki:  "Total Realisasi",      // Realisasi per baris
-  },
-  // Pemetaan kode kategori -> nama tampilan  (KATEGORI UTAMA)
-  kategoriMap: { KIT:"Pembangkit", JAR:"Jaringan", TANAH:"Pertanahan" },
-
-  // Label & key kolom bulanan
-  bulan: ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"],
-  planKeys: ["Plan Jan","Plan Feb","Plan Mar","Plan Apr","Plan May","Plan Jun","Plan Jul","Plan Aug","Plan Sep","Plan Okt","Plan Nov","Plan Des"],
-  realKeys: ["Real Jan","Real Feb","Real Mar","Real Apr","Real May","Real Jun","Real Jul","Real Aug","Real Sep","Real Okt","Real Nov","Real Des"],
+  csvUrl:"https://docs.google.com/spreadsheets/d/e/2PACX-1vQNlKtlF7EzuHJtD744U8_5UveQYnIkK6Ee97ovMUW0crSm5FrhObqiokX-ibi5Qyvsy7SrgvYI4NVo/pub?output=csv",
+  refreshMs:5*60*1000, dataYear:2026,
+  col:{ kategori:"BPO UIP", nama:"Nama Proyek" },
+  kategoriMap:{ KIT:"Pembangkit", JAR:"Jaringan", TANAH:"Pertanahan" },
+  kategoriColor:{ Pembangkit:"#D6982B", Jaringan:"#2E6FB7", Pertanahan:"#1B9E77" },
+  bulan:["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"],
+  bulanFull:["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"],
+  planKeys:["Plan Jan","Plan Feb","Plan Mar","Plan Apr","Plan May","Plan Jun","Plan Jul","Plan Aug","Plan Sep","Plan Okt","Plan Nov","Plan Des"],
+  realKeys:["Real Jan","Real Feb","Real Mar","Real Apr","Real May","Real Jun","Real Jul","Real Aug","Real Sep","Real Okt","Real Nov","Real Des"],
 };
 
 /* ============================ HELPERS ============================ */
-// ubah "Rp9.582.685.194" / "13.404.788.627" / "" -> angka
-function parseNum(v){
-  if(v==null) return 0;
-  let s=String(v).replace(/rp/ig,"").replace(/\s/g,"").replace(/\./g,"").replace(",",".");
-  s=s.replace(/[^0-9.\-]/g,"");
-  const n=parseFloat(s);
-  return isNaN(n)?0:n;
-}
-// format ringkas: Rp 38,76 M / Rp 1,2 T
-function rp(n){
-  const a=Math.abs(n);
-  if(a>=1e12) return "Rp "+(n/1e12).toFixed(2).replace(".",",")+" T";
-  if(a>=1e9)  return "Rp "+(n/1e9 ).toFixed(2).replace(".",",")+" M";
-  if(a>=1e6)  return "Rp "+(n/1e6 ).toFixed(1).replace(".",",")+" Jt";
-  return "Rp "+Math.round(n).toLocaleString("id-ID");
-}
-function rpFull(n){return "Rp "+Math.round(n).toLocaleString("id-ID");}
-function pct(part,total){return total>0?(part/total*100):0;}
-function pctStr(x){return x.toFixed(2).replace(".",",")+"%";}
-// nilai ringkas untuk label di atas batang grafik
-function compact(n){
-  const a=Math.abs(n);
-  if(a>=1e12) return (n/1e12).toFixed(1).replace(".",",")+"T";
-  if(a>=1e9)  return (n/1e9 ).toFixed(1).replace(".",",")+"M";
-  if(a>=1e6)  return (n/1e6 ).toFixed(0)+"Jt";
-  if(a>0)     return Math.round(n).toString();
-  return "0";
-}
+function parseNum(v){ if(v==null)return 0;
+  let s=String(v).replace(/rp/ig,"").replace(/\s/g,"").replace(/\./g,"").replace(",",".").replace(/[^0-9.\-]/g,"");
+  const n=parseFloat(s);return isNaN(n)?0:n; }
+function rp(n){ const a=Math.abs(n);
+  if(a>=1e12)return "Rp "+(n/1e12).toFixed(2).replace(".",",")+" T";
+  if(a>=1e9) return "Rp "+(n/1e9 ).toFixed(2).replace(".",",")+" M";
+  if(a>=1e6) return "Rp "+(n/1e6 ).toFixed(1).replace(".",",")+" Jt";
+  return "Rp "+Math.round(n).toLocaleString("id-ID"); }
+function rpFull(n){ return "Rp "+Math.round(n).toLocaleString("id-ID"); }
+function pct(p,t){ return t>0?(p/t*100):0; }
+function pctStr(x){ return x.toFixed(2).replace(".",",")+"%"; }
+function sum(arr,a,b){ let s=0;for(let i=a;i<b;i++)s+=arr[i];return s; }
+function compact(n){ const a=Math.abs(n);
+  if(a>=1e12)return (n/1e12).toFixed(1).replace(".",",")+"T";
+  if(a>=1e9) return (n/1e9 ).toFixed(1).replace(".",",")+"M";
+  if(a>=1e6) return (n/1e6 ).toFixed(0)+"Jt";
+  return a>0?Math.round(n).toString():"0"; }
 
 /* ============================ STATE ============================ */
-let charts={};             // simpan instance Chart.js agar bisa di-destroy saat refresh
+let RAW=[];                                   // baris proyek hasil parsing
+let state={ kategori:"ALL", waktu:"overall", month:0 };
+let charts={};
 Chart.register(ChartDataLabels);
-Chart.defaults.plugins.datalabels.display=false;   // default: label mati (dinyalakan per-chart)
-Chart.defaults.color="#8ba6cc";
-Chart.defaults.font.family='"Segoe UI",system-ui,sans-serif';
+Chart.defaults.plugins.datalabels.display=false;
+Chart.defaults.color="#41556B";
+Chart.defaults.font.family="'Inter',system-ui,sans-serif";
 
-/* plugin teks tengah untuk donut */
-const centerText={
-  id:"centerText",
-  afterDraw(chart,args,opts){
-    if(!opts||!opts.text) return;
-    const {ctx,chartArea:{left,right,top,bottom}}=chart;
-    const x=(left+right)/2, y=(top+bottom)/2;
-    ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";
-    ctx.font="700 20px Segoe UI, sans-serif";ctx.fillStyle=opts.color||"#22e39a";
-    ctx.fillText(opts.text,x,y);
-    if(opts.sub){ctx.font="600 9px Segoe UI, sans-serif";ctx.fillStyle="#8ba6cc";
-      ctx.fillText(opts.sub,x,y+16);}
-    ctx.restore();
-  }
-};
-Chart.register(centerText);
+/* teks tengah donut */
+Chart.register({ id:"centerText", afterDraw(c,a,o){ if(!o||!o.text)return;
+  const {ctx,chartArea:{left,right,top,bottom}}=c; const x=(left+right)/2,y=(top+bottom)/2;
+  ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.font="800 26px Inter, sans-serif";ctx.fillStyle=o.color||"#1B9E77";ctx.fillText(o.text,x,y-4);
+  ctx.font="600 10px Inter, sans-serif";ctx.fillStyle="#8090A2";ctx.fillText("Realisasi",x,y+16);
+  ctx.restore(); }});
+/* label % di atas batang bulanan */
+Chart.register({ id:"pctTop", afterDatasetsDraw(c,a,o){ if(!o||!o.plan)return;
+  const {ctx,scales:{x,y}}=c;
+  ctx.save();ctx.font="700 11px Inter, sans-serif";ctx.textAlign="center";
+  o.plan.forEach((pv,i)=>{ if(pv<=0)return;
+    const px=x.getPixelForValue(i), py=y.getPixelForValue(pv);
+    ctx.fillStyle= o.pctv[i]>0 ? "#1B9E77" : "#B4BEC9";
+    ctx.fillText(o.pct[i], px, py-7); });
+  ctx.restore(); }});
 
-/* ============================ FETCH & PARSE ============================ */
+/* ============================ FETCH ============================ */
 function loadData(){
-  const banner=document.getElementById("banner");
-  const btn=document.getElementById("refreshBtn");
-  btn.classList.add("spin");
-  banner.className="banner load show";banner.textContent="Memuat data dari Google Sheets…";
-
-  // cache-buster agar selalu data terbaru
+  const banner=document.getElementById("banner"), btn=document.getElementById("refreshBtn");
+  btn.classList.add("spin"); banner.className="banner load show";
+  banner.textContent="Memuat data dari Google Sheets…";
   const url=CONFIG.csvUrl+(CONFIG.csvUrl.includes("?")?"&":"?")+"_="+Date.now();
-
-  Papa.parse(url,{
-    download:true, header:true, skipEmptyLines:true,
-    complete:(res)=>{
-      try{
+  Papa.parse(url,{ download:true, header:true, skipEmptyLines:true,
+    complete:(res)=>{ try{
         const rows=(res.data||[]).filter(r=>r[CONFIG.col.kategori]);
         if(!rows.length) throw new Error("Data kosong / kolom tidak dikenali.");
-        render(process(rows));
-        banner.className="banner";
-        btn.classList.remove("spin");
-      }catch(e){showError(e.message);}
-    },
+        RAW=rows.map(r=>({
+          code:(r[CONFIG.col.kategori]||"").trim().toUpperCase(),
+          nama:(r[CONFIG.col.nama]||"—").trim(),
+          planM:CONFIG.planKeys.map(k=>parseNum(r[k])),
+          realM:CONFIG.realKeys.map(k=>parseNum(r[k])),
+        }));
+        setupMonthDefault(); renderAll();
+        banner.className="banner"; btn.classList.remove("spin");
+      }catch(e){ showError(e.message); } },
     error:(err)=>showError(err&&err.message?err.message:"Gagal mengunduh CSV.")
   });
 }
-function showError(msg){
-  const banner=document.getElementById("banner");
+function showError(m){ const b=document.getElementById("banner");
   document.getElementById("refreshBtn").classList.remove("spin");
-  banner.className="banner err show";
-  banner.innerHTML="Gagal memuat data: "+msg+
-    " Periksa koneksi atau pastikan sheet masih dipublikasikan. "+
-    "<span class='retry' onclick='loadData()'>Coba lagi</span>";
+  b.className="banner err show";
+  b.innerHTML="Gagal memuat data: "+m+" Pastikan sheet masih dipublikasikan. "+
+    "<span class='retry' onclick='loadData()'>Coba lagi</span>"; }
+
+/* default bulan = bulan terakhir yang punya realisasi, atau bulan berjalan */
+function setupMonthDefault(){
+  const g=Array(12).fill(0); RAW.forEach(r=>r.realM.forEach((v,i)=>g[i]+=v));
+  let last=-1; g.forEach((v,i)=>{ if(v>0) last=i; });
+  const now=new Date(); let cur=now.getFullYear()===CONFIG.dataYear?now.getMonth():5;
+  state.month = last>=0?last:cur;
 }
 
-/* ============================ PROCESS ============================ */
-function process(rows){
-  const codes=Object.keys(CONFIG.kategoriMap);              // [KIT,JAR,TANAH]
-  const cat={}; codes.forEach(c=>cat[c]={plan:0,real:0,n:0});
-  let plan=0, real=0;
-  const planM=Array(12).fill(0), realM=Array(12).fill(0);
-
-  rows.forEach(r=>{
-    const code=(r[CONFIG.col.kategori]||"").trim().toUpperCase();
-    const p=parseNum(r[CONFIG.col.planAki]);
-    const rr=parseNum(r[CONFIG.col.realAki]);
-    plan+=p; real+=rr;
-    if(cat[code]){cat[code].plan+=p;cat[code].real+=rr;cat[code].n++;}
-    CONFIG.planKeys.forEach((k,i)=>planM[i]+=parseNum(r[k]));
-    CONFIG.realKeys.forEach((k,i)=>realM[i]+=parseNum(r[k]));
-  });
-
-  // urutan tampilan kategori utama: Jaringan, Pembangkit, Pertanahan
-  const order=["JAR","KIT","TANAH"];
-  const cats=order.filter(c=>cat[c]).map(c=>({
-    code:c, name:CONFIG.kategoriMap[c],
-    plan:cat[c].plan, real:cat[c].real, n:cat[c].n,
-    pct:pct(cat[c].real,cat[c].plan), sisa:cat[c].plan-cat[c].real
-  }));
-
-  // bulan berjalan (elapsed) untuk metrik eksekutif
-  const now=new Date();
-  let cur;
-  if(now.getFullYear()>CONFIG.dataYear) cur=12;
-  else if(now.getFullYear()<CONFIG.dataYear) cur=1;
-  else cur=now.getMonth()+1;
-
-  const planTo=planM.slice(0,cur).reduce((a,b)=>a+b,0);
-  const realTo=realM.slice(0,cur).reduce((a,b)=>a+b,0);
-
-  return {
-    plan, real, pct:pct(real,plan), sisa:plan-real,
-    cats, planM, realM,
-    sem:[
-      {name:"Semester I",  sub:"Januari – Juni",   plan:planM.slice(0,6).reduce((a,b)=>a+b,0),  real:realM.slice(0,6).reduce((a,b)=>a+b,0)},
-      {name:"Semester II", sub:"Juli – Desember",  plan:planM.slice(6).reduce((a,b)=>a+b,0),    real:realM.slice(6).reduce((a,b)=>a+b,0)},
-    ],
-    cur, planTo, realTo,
-    burn: realM[cur-1]||0,
-    avg: cur>0? realTo/cur : 0,
-    forecast: cur>0? (realTo/cur)*12 : 0,
-    growth: (function(){const a=realM[cur-1]||0,b=realM[cur-2]||0;
-      if(b===0) return a>0?null:0; return (a-b)/b*100;})(),
-    totalRows: rows.length
-  };
+/* ============================ AGGREGATION ============================ */
+// nilai plan/real satu baris untuk periode terpilih
+function rowVal(r){
+  if(state.waktu==="overall") return {plan:sum(r.planM,0,12), real:sum(r.realM,0,12)};
+  if(state.waktu==="sem1")    return {plan:sum(r.planM,0,6),  real:sum(r.realM,0,6)};
+  if(state.waktu==="sem2")    return {plan:sum(r.planM,6,12), real:sum(r.realM,6,12)};
+  return {plan:r.planM[state.month], real:r.realM[state.month]};        // month
 }
-
-/* ============================ RENDER ============================ */
-const catIcons={
-  Jaringan:'<svg viewBox="0 0 24 24" fill="none" stroke="#38e6ff" stroke-width="2"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><path d="M5 8v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8M12 13v3"/></svg>',
-  Pembangkit:'<svg viewBox="0 0 24 24" fill="none" stroke="#ffb02e" stroke-width="2"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg>',
-  Pertanahan:'<svg viewBox="0 0 24 24" fill="none" stroke="#22e39a" stroke-width="2"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/></svg>'
-};
-const catColor={Jaringan:"#38e6ff",Pembangkit:"#ffb02e",Pertanahan:"#22e39a"};
-
-function statusOf(achieved,expected){
-  if(expected<=0) return achieved>0?{t:"On Track",c:"green"}:{t:"Warning",c:"yellow"};
-  const r=achieved/expected;
-  if(r>=0.9) return {t:"On Track",c:"green"};
-  if(r>=0.6) return {t:"Warning",c:"yellow"};
-  return {t:"Critical",c:"red"};
+function rowsFor(cat){ return cat==="ALL"?RAW:RAW.filter(r=>r.code===cat); }
+function aggregate(cat){
+  let plan=0,real=0; rowsFor(cat).forEach(r=>{const v=rowVal(r);plan+=v.plan;real+=v.real;});
+  return {plan,real,pct:pct(real,plan),sisa:plan-real};
 }
+function periodLabel(){
+  if(state.waktu==="overall")return "Tahun 2026 (Jan–Des)";
+  if(state.waktu==="sem1")return "Semester I (Jan–Jun)";
+  if(state.waktu==="sem2")return "Semester II (Jul–Des)";
+  return CONFIG.bulanFull[state.month]+" 2026";
+}
+function katLabel(){ return state.kategori==="ALL"?"Semua Kategori":CONFIG.kategoriMap[state.kategori]; }
 
-function render(d){
-  // tanggal data
+/* ============================ RENDER ALL ============================ */
+function renderAll(){
   document.getElementById("dataDate").textContent=new Date()
     .toLocaleDateString("id-ID",{day:"2-digit",month:"long",year:"numeric"});
+  const d=aggregate(state.kategori);
 
-  /* ---- Section 1 ---- */
-  document.getElementById("k_plan").textContent=rp(d.plan);
-  document.getElementById("k_plan").title=rpFull(d.plan);
-  document.getElementById("k_real").textContent=rp(d.real);
-  document.getElementById("k_real").title=rpFull(d.real);
+  // context
+  document.getElementById("contextNote").innerHTML=
+    "Menampilkan <span class='chip'>"+katLabel()+"</span> &middot; <span class='chip'>"+periodLabel()+"</span>";
+
+  // KPI
+  const kp=document.getElementById("k_plan"); kp.textContent=rp(d.plan); kp.title=rpFull(d.plan);
+  const kr=document.getElementById("k_real"); kr.textContent=rp(d.real); kr.title=rpFull(d.real);
   document.getElementById("k_pct").textContent=pctStr(d.pct);
-  document.getElementById("k_sisa").textContent=rp(d.sisa);
-  document.getElementById("k_sisa").title=rpFull(d.sisa);
+  const ks=document.getElementById("k_sisa"); ks.textContent=rp(d.sisa); ks.title=rpFull(d.sisa);
 
-  const C=2*Math.PI*80;
-  const off=C*(1-Math.min(d.pct,100)/100);
-  const arc=document.getElementById("gaugeArc");
-  arc.style.transition="stroke-dashoffset 1.3s cubic-bezier(.2,.8,.2,1)";
-  requestAnimationFrame(()=>arc.style.strokeDashoffset=off);
-  document.getElementById("gaugePct").textContent=Math.round(d.pct)+"%";
-  document.getElementById("pbLabel").textContent=pctStr(d.pct);
+  // progress
+  document.getElementById("bigPct").innerHTML=pctStr(d.pct)+"<small>Realisasi terhadap Plan AKI</small>";
   document.getElementById("pbFill").style.width=Math.min(d.pct,100)+"%";
-  document.getElementById("bigPct").innerHTML=pctStr(d.pct)+"<small>Total Realisasi AKI 2026</small>";
+  document.getElementById("pr_plan").textContent=rp(d.plan);
+  document.getElementById("pr_real").textContent=rp(d.real);
+  document.getElementById("pr_sisa").textContent=rp(d.sisa);
+  makeDonut(d.real,d.sisa,pctStr(d.pct));
 
-  /* ---- Section 2 : kategori ---- */
-  const cp=document.getElementById("catPanels");cp.innerHTML="";
-  d.cats.forEach((c,i)=>{
-    const col=catColor[c.name]||"#38e6ff";
-    const el=document.createElement("div");el.className="card";
-    el.innerHTML=`
-      <div class="panel-head">
-        <div class="ic" style="background:${col}1f;border:1px solid ${col}55">${catIcons[c.name]||""}</div>
-        <div class="nm">${c.name}</div>
-        <div class="tag" style="background:${col}1f;color:${col}">${c.n} item</div>
-      </div>
-      <div class="mini-donut"><canvas id="donutC${i}"></canvas></div>
-      <div class="kv"><span class="k">Plan AKI</span><span class="v plan">${rp(c.plan)}</span></div>
-      <div class="kv"><span class="k">Realisasi AKI</span><span class="v real">${rp(c.real)}</span></div>
-      <div class="kv"><span class="k">% Realisasi</span><span class="v cyan">${pctStr(c.pct)}</span></div>
-      <div class="kv"><span class="k">Sisa Plan</span><span class="v muted">${rp(c.sisa)}</span></div>
-      <div class="pbar sm"><i style="width:${Math.min(c.pct,100)}%"></i></div>`;
-    cp.appendChild(el);
-    makeDonut("donutC"+i,c.real,c.sisa,pctStr(c.pct));
-  });
-
-  /* ---- Section 3 : semester ---- */
-  const sp=document.getElementById("semPanels");sp.innerHTML="";
-  d.sem.forEach((s,i)=>{
-    const p=pct(s.real,s.plan);
-    const el=document.createElement("div");el.className="card";
-    el.innerHTML=`
-      <div class="panel-head">
-        <div class="ic" style="background:rgba(56,230,255,.1);border:1px solid rgba(56,230,255,.35)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#38e6ff" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div>
-        <div><div class="nm">${s.name}</div><div style="font-size:11px;color:var(--muted)">${s.sub}</div></div>
-      </div>
-      <div class="grid g2" style="gap:10px;align-items:center">
-        <div class="mini-donut" style="width:140px;height:140px"><canvas id="donutS${i}"></canvas></div>
-        <div>
-          <div class="kv"><span class="k">Total Plan</span><span class="v plan">${rp(s.plan)}</span></div>
-          <div class="kv"><span class="k">Total Realisasi</span><span class="v real">${rp(s.real)}</span></div>
-          <div class="kv"><span class="k">% Realisasi</span><span class="v cyan">${pctStr(p)}</span></div>
-        </div>
-      </div>
-      <div class="pbar sm"><i style="width:${Math.min(p,100)}%"></i></div>`;
-    sp.appendChild(el);
-    makeDonut("donutS"+i,s.real,s.plan-s.real,pctStr(p));
-  });
-
-  /* ---- Section 4 : bar bulanan ---- */
-  makeMonthly(d.planM,d.realM);
-
-  /* ---- Section 5 : ranking ---- */
-  const medals=["🥇","🥈","🥉"];
-  const ranked=[...d.cats].sort((a,b)=>b.pct-a.pct).slice(0,3);
-  const maxP=Math.max(...ranked.map(r=>r.pct),1);
-  const rb=document.getElementById("rankBox");rb.innerHTML="";
-  ranked.forEach((r,i)=>{
-    const row=document.createElement("div");row.className="rank-row";
-    row.innerHTML=`<div class="medal">${medals[i]}</div>
-      <div class="rk-name">${r.name}</div>
-      <div class="rk-bar"><i style="width:${Math.max(r.pct/maxP*100,2)}%"></i></div>
-      <div class="rk-pct">${pctStr(r.pct)}</div>`;
-    rb.appendChild(row);
-  });
-
-  /* ---- Section 6 : tabel ---- */
-  const tb=document.getElementById("tableBody");tb.innerHTML="";
-  d.cats.forEach(c=>{
-    tb.innerHTML+=`<tr>
-      <td>${c.name}</td>
-      <td class="cell-plan">${rpFull(c.plan)}</td>
-      <td class="cell-real">${rpFull(c.real)}</td>
-      <td>${pctStr(c.pct)}</td>
-      <td>${rpFull(c.sisa)}</td></tr>`;
-  });
-  tb.innerHTML+=`<tr class="total-row">
-      <td>TOTAL</td>
-      <td>${rpFull(d.plan)}</td>
-      <td>${rpFull(d.real)}</td>
-      <td>${pctStr(d.pct)}</td>
-      <td>${rpFull(d.sisa)}</td></tr>`;
-
-  /* ---- Section 7 : executive KPI ---- */
-  const expPct=pct(d.planTo,d.plan);          // ekspektasi realisasi s/d bln berjalan
-  const st=statusOf(d.pct,expPct);
-  const dev=d.realTo-d.planTo;                // deviasi (negatif = di bawah rencana)
-  const devPct=d.planTo>0?dev/d.planTo*100:0;
-  const growthTxt=d.growth===null?"—":(d.growth>=0?"+":"")+d.growth.toFixed(1).replace(".",",")+"%";
-  const growthCls=d.growth===null?"txt-cyan":(d.growth>=0?"txt-green":"txt-red");
-  const devCls=dev>=0?"txt-green":"txt-red";
-  const icoU='<svg viewBox="0 0 24 24" fill="none" stroke="#8ba6cc" stroke-width="2">';
-
-  const items=[
-    {l:"Achievement Rate",   v:pctStr(d.pct),          n:"Realisasi / Plan AKI", cls:"txt-cyan",
-     ic:'<path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>'},
-    {l:"Remaining Budget",   v:rp(d.sisa),             n:"Anggaran belum terserap", cls:"txt-yellow",
-     ic:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>'},
-    {l:"Forecast Akhir Tahun",v:rp(d.forecast),        n:"Proyeksi 12 bulan", cls:"txt-plan",
-     ic:'<path d="M3 3v18h18"/><path d="m7 12 4-4 3 3 5-6"/>'},
-    {l:"Monthly Burn Rate",  v:rp(d.burn),             n:"Realisasi "+CONFIG.bulan[d.cur-1], cls:"txt-cyan",
-     ic:'<path d="M8 2s4 3 4 8a3 3 0 0 1-6 0c0-1 .5-2 .5-2S8 8 8 2z"/><path d="M12 12s3 2 3 6a4 4 0 0 1-8 0"/>'},
-    {l:"Avg Monthly Disbursement",v:rp(d.avg),         n:"Rata-rata "+d.cur+" bulan", cls:"txt-plan",
-     ic:'<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 10h4a2 2 0 0 1 0 4H8"/>'},
-    {l:"Deviasi Plan vs Realisasi",v:(dev>=0?"+":"")+rp(dev), n:pctStr(Math.abs(devPct))+" thd rencana", cls:devCls,
-     ic:'<path d="M12 3v18M5 10l7-7 7 7"/>'},
-    {l:"Pertumbuhan vs Bln Lalu", v:growthTxt,         n:"Δ realisasi bulanan", cls:growthCls,
-     ic:'<path d="M3 17 9 11l4 4 8-8"/><path d="M21 7v6h-6"/>'},
-    {l:"Status Proyek",      v:`<span class="status-dot s-${st.c}"></span>${st.t}`, n:"Berdasarkan target berjalan", cls:"txt-"+st.c,
-     ic:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>'},
-  ];
-  const eg=document.getElementById("execGrid");eg.innerHTML="";
-  items.forEach(it=>{
-    const el=document.createElement("div");el.className="card exec";
-    el.innerHTML=`<div class="lbl">${icoU}${it.ic}</svg>${it.l}</div>
-      <div class="val ${it.cls}">${it.v}</div><div class="note">${it.n}</div>`;
-    eg.appendChild(el);
-  });
+  renderCategory();
+  renderMonthly();
+  renderTop();
+  renderTable();
+  renderExec(d);
 }
 
-/* ---- donut kecil (Realisasi hijau vs Sisa biru) ---- */
-function makeDonut(id,real,sisa,label){
-  if(charts[id]) charts[id].destroy();
-  const ctx=document.getElementById(id);if(!ctx)return;
-  charts[id]=new Chart(ctx,{
+/* ---- donut (satu-satunya pie) ---- */
+function makeDonut(real,sisa,label){
+  if(charts.donut)charts.donut.destroy();
+  charts.donut=new Chart(document.getElementById("donut"),{
     type:"doughnut",
     data:{labels:["Realisasi","Sisa"],datasets:[{data:[Math.max(real,0),Math.max(sisa,0)],
-      backgroundColor:["#22e39a","rgba(56,189,248,.35)"],borderColor:"rgba(0,0,0,0)",borderWidth:0,
-      hoverOffset:4}]},
-    options:{cutout:"70%",responsive:true,maintainAspectRatio:false,
+      backgroundColor:["#1B9E77","#D6DEE8"],borderWidth:0,hoverOffset:3}]},
+    options:{cutout:"72%",responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},datalabels:{display:false},
-        centerText:{text:label,color:"#22e39a"},
+        centerText:{text:label,color:"#1B9E77"},
         tooltip:{callbacks:{label:c=>c.label+": "+rp(c.raw)}}}}
   });
 }
 
-/* ---- clustered column bulanan ---- */
-function makeMonthly(planM,realM){
-  if(charts.monthly) charts.monthly.destroy();
-  const ctx=document.getElementById("monthlyChart");
-  charts.monthly=new Chart(ctx,{
+/* ---- perbandingan kategori (horizontal, respek filter Waktu) ---- */
+function renderCategory(){
+  const order=["JAR","KIT","TANAH"];
+  const names=order.map(c=>CONFIG.kategoriMap[c]);
+  const plans=order.map(c=>aggregate(c).plan);
+  const reals=order.map(c=>aggregate(c).real);
+  // sorot kategori terpilih
+  const emph=(c)=> state.kategori==="ALL"||state.kategori===c?1:.35;
+  const alpha=order.map(emph);
+  if(charts.cat)charts.cat.destroy();
+  charts.cat=new Chart(document.getElementById("catChart"),{
     type:"bar",
-    data:{labels:CONFIG.bulan,datasets:[
-      {label:"Plan",data:planM,backgroundColor:"rgba(56,189,248,.85)",
-       borderRadius:5,barPercentage:.78,categoryPercentage:.7},
-      {label:"Realisasi",data:realM,backgroundColor:"rgba(34,227,154,.9)",
-       borderRadius:5,barPercentage:.78,categoryPercentage:.7},
+    data:{labels:names,datasets:[
+      {label:"Plan",data:plans,backgroundColor:order.map((c,i)=>`rgba(46,111,183,${alpha[i]})`),borderRadius:5,barPercentage:.9},
+      {label:"Realisasi",data:reals,backgroundColor:order.map((c,i)=>`rgba(27,158,119,${alpha[i]})`),borderRadius:5,barPercentage:.9},
     ]},
-    options:{responsive:true,maintainAspectRatio:false,
-      layout:{padding:{top:22}},
-      plugins:{
-        legend:{display:true,position:"top",labels:{usePointStyle:true,pointStyle:"rectRounded",
-          padding:18,color:"#eaf3ff",font:{size:12,weight:"600"}}},
-        datalabels:{display:(c)=>c.dataset.data[c.dataIndex]>0,
-          anchor:"end",align:"end",rotation:-90,offset:2,
-          color:(c)=>c.datasetIndex===0?"#8fd6ff":"#7ff0c4",
-          font:{size:9,weight:"700"},formatter:v=>compact(v)},
-        tooltip:{callbacks:{label:c=>c.dataset.label+": "+rpFull(c.raw)}}
-      },
-      scales:{
-        x:{grid:{display:false},ticks:{color:"#8ba6cc",font:{weight:"600"}}},
-        y:{grid:{color:"rgba(120,160,220,.1)"},ticks:{color:"#8ba6cc",
-          callback:v=>compact(v)}}
-      }}
+    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,
+      layout:{padding:{right:54}},
+      plugins:{legend:{display:true,position:"top",align:"end",
+          labels:{usePointStyle:true,pointStyle:"rectRounded",boxWidth:9,padding:14,font:{size:12,weight:"600"}}},
+        datalabels:{display:c=>c.dataset.data[c.dataIndex]>0,anchor:"end",align:"end",
+          color:(c)=>c.datasetIndex===0?"#2E6FB7":"#1B9E77",font:{size:10,weight:"700"},
+          formatter:v=>compact(v)},
+        tooltip:{callbacks:{label:c=>c.dataset.label+": "+rpFull(c.raw)}}},
+      scales:{x:{grid:{color:"#EEF2F7"},ticks:{callback:v=>compact(v),font:{size:11}}},
+        y:{grid:{display:false},ticks:{font:{size:12,weight:"600"},color:"#0C2233"}}}}
   });
 }
 
+/* ---- bar bulanan stacked (Realisasi + Sisa = Plan) + label % (respek filter Kategori) ---- */
+function renderMonthly(){
+  const rows=rowsFor(state.kategori);
+  const planM=Array(12).fill(0), realM=Array(12).fill(0);
+  rows.forEach(r=>{ r.planM.forEach((v,i)=>planM[i]+=v); r.realM.forEach((v,i)=>realM[i]+=v); });
+  const sisaM=planM.map((p,i)=>Math.max(p-realM[i],0));
+  const pctArr=planM.map((p,i)=>p>0?(realM[i]/p*100):0);
+  const pctLbl=pctArr.map(x=>x>0?x.toFixed(0)+"%":"0%");
+
+  // sorot bulan aktif saat mode Per Bulan
+  const hi=(i)=> state.waktu==="month"&&i!==state.month?.45:1;
+  document.getElementById("monthlyDesc").textContent=
+    "Kategori: "+katLabel()+" — hijau = realisasi, abu = sisa plan";
+
+  if(charts.monthly)charts.monthly.destroy();
+  charts.monthly=new Chart(document.getElementById("monthlyChart"),{
+    type:"bar",
+    data:{labels:CONFIG.bulan,datasets:[
+      {label:"Realisasi",data:realM,backgroundColor:CONFIG.bulan.map((_,i)=>`rgba(27,158,119,${hi(i)})`),
+        stack:"s",borderRadius:{topLeft:0,topRight:0}},
+      {label:"Sisa Plan",data:sisaM,backgroundColor:CONFIG.bulan.map((_,i)=>`rgba(214,222,232,${hi(i)})`),
+        stack:"s",borderRadius:4},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:26}},
+      plugins:{
+        legend:{display:true,position:"top",align:"end",
+          labels:{usePointStyle:true,pointStyle:"rectRounded",boxWidth:9,padding:14,font:{size:12,weight:"600"}}},
+        datalabels:{display:false},
+        pctTop:{plan:planM,pct:pctLbl,pctv:pctArr},
+        tooltip:{callbacks:{
+          title:it=>CONFIG.bulanFull[it[0].dataIndex],
+          label:c=>c.dataset.label+": "+rpFull(c.raw),
+          afterBody:it=>{const i=it[0].dataIndex;return "% Realisasi: "+pctStr(pctArr[i]);}}}},
+      scales:{x:{stacked:true,grid:{display:false},ticks:{font:{weight:"600"}}},
+        y:{stacked:true,grid:{color:"#EEF2F7"},ticks:{callback:v=>compact(v),font:{size:11}}}}}
+  });
+}
+
+/* ---- Top Disbursement (respek Kategori + Waktu) ---- */
+function renderTop(){
+  document.getElementById("topDesc").textContent=
+    "Realisasi terbesar — "+katLabel()+" · "+periodLabel();
+  const list=rowsFor(state.kategori).map(r=>{const v=rowVal(r);
+    return {nama:r.nama,code:r.code,real:v.real};})
+    .filter(x=>x.real>0).sort((a,b)=>b.real-a.real).slice(0,5);
+  const box=document.getElementById("topBox"); box.innerHTML="";
+  if(!list.length){ box.innerHTML="<div class='top-empty'>Belum ada realisasi pada periode ini.</div>"; return; }
+  const max=list[0].real, gcls=["g1","g2","g3"];
+  list.forEach((it,i)=>{
+    const row=document.createElement("div");row.className="top-row";
+    row.innerHTML=`<div class="rk ${gcls[i]||''}">${i+1}</div>
+      <div class="nm"><div class="t" title="${it.nama}">${it.nama}</div>
+        <div class="cat">${CONFIG.kategoriMap[it.code]||it.code}</div></div>
+      <div class="bar"><i style="width:${Math.max(it.real/max*100,3)}%"></i></div>
+      <div class="amt">${rp(it.real)}</div>`;
+    box.appendChild(row);
+  });
+}
+
+/* ---- tabel ringkasan (semua kategori, respek Waktu) ---- */
+function renderTable(){
+  document.getElementById("tableDesc").textContent=periodLabel();
+  const order=["JAR","KIT","TANAH"]; const tb=document.getElementById("tableBody"); tb.innerHTML="";
+  let tp=0,tr=0;
+  order.forEach(c=>{ const a=aggregate(c); tp+=a.plan; tr+=a.real;
+    const col=CONFIG.kategoriColor[CONFIG.kategoriMap[c]];
+    tb.innerHTML+=`<tr>
+      <td><span class="dotcat" style="background:${col}"></span>${CONFIG.kategoriMap[c]}</td>
+      <td class="c-plan">${rpFull(a.plan)}</td>
+      <td class="c-real">${rpFull(a.real)}</td>
+      <td>${pctStr(a.pct)}</td>
+      <td>${rpFull(a.sisa)}</td></tr>`;
+  });
+  tb.innerHTML+=`<tr class="total"><td>TOTAL</td>
+    <td>${rpFull(tp)}</td><td>${rpFull(tr)}</td><td>${pctStr(pct(tr,tp))}</td><td>${rpFull(tp-tr)}</td></tr>`;
+}
+
+/* ---- indikator eksekutif ---- */
+function renderExec(d){
+  // rata-rata disbursement per bulan dalam periode
+  const monthsIn = state.waktu==="overall"?12 : state.waktu==="month"?1 : 6;
+  const avg = d.real/monthsIn;
+  // status berdasarkan capaian penyerapan
+  let st; if(d.pct>=75) st={t:"On Track",c:"green"};
+  else if(d.pct>=40) st={t:"Warning",c:"amber"};
+  else st={t:"Critical",c:"red"};
+  const items=[
+    {l:"Achievement Rate", v:pctStr(d.pct), n:"Realisasi / Plan", cls:"t-navy"},
+    {l:"Sisa Anggaran", v:rp(d.sisa), n:"Belum terserap", cls:"t-amber"},
+    {l:"Rata-rata / Bulan", v:rp(avg), n:"Disbursement periode ini", cls:"t-plan"},
+    {l:"Status Proyek", v:`<span class="status s-${st.c}"><span class="dot"></span>${st.t}</span>`, n:"Capaian penyerapan", cls:""},
+  ];
+  const eg=document.getElementById("execGrid"); eg.innerHTML="";
+  items.forEach(it=>{ const el=document.createElement("div"); el.className="card exec";
+    el.innerHTML=`<div class="label">${it.l}</div><div class="val ${it.cls}">${it.v}</div><div class="note">${it.n}</div>`;
+    eg.appendChild(el); });
+}
+
+/* ============================ FILTER WIRING ============================ */
+function buildMonthSel(){
+  const g=Array(12).fill(0); RAW.forEach(r=>r.realM.forEach((v,i)=>g[i]+=v));
+  const box=document.getElementById("monthSel"); box.innerHTML="";
+  CONFIG.bulan.forEach((b,i)=>{
+    const el=document.createElement("button");
+    el.className="mpill"+(g[i]>0?" has-data":"")+(i===state.month?" active":"");
+    el.textContent=b; el.dataset.m=i;
+    el.onclick=()=>{ state.month=i; document.querySelectorAll("#monthSel .mpill")
+      .forEach(x=>x.classList.toggle("active",+x.dataset.m===i)); renderAll(); };
+    box.appendChild(el);
+  });
+}
+function wireFilters(){
+  document.getElementById("filKategori").addEventListener("click",e=>{
+    const b=e.target.closest(".pill"); if(!b)return;
+    state.kategori=b.dataset.v;
+    document.querySelectorAll("#filKategori .pill").forEach(x=>x.classList.toggle("active",x===b));
+    renderAll();
+  });
+  document.getElementById("filWaktu").addEventListener("click",e=>{
+    const b=e.target.closest(".pill"); if(!b)return;
+    state.waktu=b.dataset.v;
+    document.querySelectorAll("#filWaktu .pill").forEach(x=>x.classList.toggle("active",x===b));
+    const ms=document.getElementById("monthSel");
+    if(state.waktu==="month"){ ms.style.display="flex"; buildMonthSel(); }
+    else ms.style.display="none";
+    renderAll();
+  });
+  document.getElementById("refreshBtn").addEventListener("click",loadData);
+}
+
 /* ============================ INIT ============================ */
-document.getElementById("refreshBtn").addEventListener("click",loadData);
+wireFilters();
 loadData();
-setInterval(loadData,CONFIG.refreshMs);   // auto-refresh berkala (realtime)
+setInterval(loadData,CONFIG.refreshMs);
 </script>
 </body>
 </html>
