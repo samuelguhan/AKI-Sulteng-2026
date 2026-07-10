@@ -255,8 +255,24 @@ table.sum tbody tr.total td{font-weight:800;color:var(--navy);border-top:2px sol
 .exec-status-help b{color:var(--ink-soft)}
 
 /* pareto per kategori */
-.pareto-title{font-size:13px;font-weight:800;margin-bottom:8px}
-.pareto-box{height:220px}
+/* pie Plan vs Realisasi per kategori */
+.pie-card{padding-top:22px}
+.pie-row{display:flex;align-items:center;justify-content:center;gap:36px;flex-wrap:wrap}
+.pie-col{flex:1;min-width:170px;max-width:240px;text-align:center}
+.pie-label{font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.pie-box{height:190px}
+.pie-total{margin-top:14px;font-size:20px;font-weight:900;color:var(--plan);letter-spacing:.2px}
+.pie-total.real{color:var(--real)}
+.pie-divider{width:1px;align-self:stretch;background:var(--line-2);flex:none}
+.pie-legend{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;margin-top:22px;padding-top:16px;border-top:1px dashed var(--line)}
+.pie-legend .item{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--ink-soft)}
+.pie-legend .dot{width:10px;height:10px;border-radius:3px;flex:none}
+@media(max-width:600px){.pie-row{gap:14px}.pie-divider{display:none}.pie-col{min-width:130px}}
+
+/* pareto per kategori */
+.pareto-title{font-size:13px;font-weight:800;margin-bottom:2px}
+.pareto-sub{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:10px}
+.pareto-box{height:250px}
 @media(max-width:900px){.g3{grid-template-columns:1fr}}
 
 /* ============================ FOOTER (contact) ============================ */
@@ -409,6 +425,28 @@ table.sum tbody tr.total td{font-weight:800;color:var(--navy);border-top:2px sol
     </div>
   </div>
 
+  <!-- ============================ PLAN VS REALISASI PER KATEGORI (PIE) ============================ -->
+  <div class="block">
+    <div class="block-title"><h2>Plan vs Realisasi per Kategori</h2>
+      <span class="desc">Distribusi Jaringan, Pembangkit &amp; Pertanahan</span></div>
+    <div class="card pie-card">
+      <div class="pie-row">
+        <div class="pie-col">
+          <div class="pie-label">Plan AKI</div>
+          <div class="chart-box pie-box"><canvas id="pieplan"></canvas></div>
+          <div class="pie-total" id="pieplanTotal">Rp 0</div>
+        </div>
+        <div class="pie-divider"></div>
+        <div class="pie-col">
+          <div class="pie-label">Realisasi AKI</div>
+          <div class="chart-box pie-box"><canvas id="pieReal"></canvas></div>
+          <div class="pie-total real" id="pieRealTotal">Rp 0</div>
+        </div>
+      </div>
+      <div class="pie-legend" id="pieLegend"></div>
+    </div>
+  </div>
+
   <!-- ============================ MONTHLY (grouped) ============================ -->
   <div class="block">
     <div class="block-title"><h2>Plan vs Realisasi per Bulan</h2>
@@ -467,11 +505,23 @@ table.sum tbody tr.total td{font-weight:800;color:var(--navy);border-top:2px sol
   <!-- ============================ PARETO PLAN PER KATEGORI ============================ -->
   <div class="block">
     <div class="block-title"><h2>Pareto Plan Terbesar per Kategori</h2>
-      <span class="desc">Proyek dengan porsi Plan penyerapan terbesar pada tiap kategori, diurutkan menurun + kumulatif %</span></div>
+      <span class="desc">Top 2 proyek dengan porsi Plan terbesar per kategori + kontribusi kumulatifnya</span></div>
     <div class="grid g3">
-      <div class="card"><div class="pareto-title" style="color:var(--plan)">Jaringan</div><div class="chart-box pareto-box"><canvas id="paretoJAR"></canvas></div></div>
-      <div class="card"><div class="pareto-title" style="color:var(--amber)">Pembangkit</div><div class="chart-box pareto-box"><canvas id="paretoKIT"></canvas></div></div>
-      <div class="card"><div class="pareto-title" style="color:var(--real)">Pertanahan</div><div class="chart-box pareto-box"><canvas id="paretoTANAH"></canvas></div></div>
+      <div class="card">
+        <div class="pareto-title" style="color:var(--plan)">Jaringan</div>
+        <div class="pareto-sub" id="paretoJARsub">—</div>
+        <div class="chart-box pareto-box"><canvas id="paretoJAR"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="pareto-title" style="color:var(--amber)">Pembangkit</div>
+        <div class="pareto-sub" id="paretoKITsub">—</div>
+        <div class="chart-box pareto-box"><canvas id="paretoKIT"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="pareto-title" style="color:var(--real)">Pertanahan</div>
+        <div class="pareto-sub" id="paretoTANAHsub">—</div>
+        <div class="chart-box pareto-box"><canvas id="paretoTANAH"></canvas></div>
+      </div>
     </div>
   </div>
 
@@ -670,37 +720,78 @@ function renderAll(){
   const kr=document.getElementById("k_real"); kr.textContent=rp(d.real); kr.title=rpFull(d.real);
   document.getElementById("k_pct").textContent=pctStr(d.pct);
   const ks=document.getElementById("k_sisa"); ks.textContent=rp(d.sisa); ks.title=rpFull(d.sisa);
-  renderMonthly(); renderTop(); renderTable(); renderParetoAll(); renderExec(); renderHero(d);
+  renderKategoriPie(); renderMonthly(); renderTop(); renderTable(); renderParetoAll(); renderExec(); renderHero(d);
   updateFilterSummary();
 }
 
-/* ---- Pareto Plan terbesar per kategori (3 diagram kecil) ---- */
+/* ---- Plan vs Realisasi per Kategori — pie/donut ganda di bawah Sorotan Utama ---- */
+const pieCenterPlugin={ id:"pieCenterPlugin", afterDraw(chart,args,opts){
+  const txt=opts&&opts.text; if(!txt) return;
+  const {ctx,chartArea:{left,right,top,bottom}}=chart; const x=(left+right)/2,y=(top+bottom)/2;
+  ctx.save(); ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.font="800 16px 'Source Sans 3',sans-serif"; ctx.fillStyle=opts.color||inkColor();
+  ctx.fillText(txt,x,y); ctx.restore(); } };
+function renderKategoriPie(){
+  const order=["JAR","KIT","TANAH"];
+  const names=order.map(c=>CONFIG.kategoriMap[c]);
+  const colors=order.map(c=>CONFIG.kategoriColor[CONFIG.kategoriMap[c]]);
+  const plans=order.map(c=>aggregate(c).plan), reals=order.map(c=>aggregate(c).real);
+  const totalPlan=plans.reduce((a,b)=>a+b,0), totalReal=reals.reduce((a,b)=>a+b,0);
+  document.getElementById("pieplanTotal").textContent=rp(totalPlan);
+  document.getElementById("pieRealTotal").textContent=rp(totalReal);
+  const ringColor=isDarkMode()?"#101B29":"#fff";
+  function makePie(id,data,total){
+    if(charts[id])charts[id].destroy();
+    charts[id]=new Chart(document.getElementById(id),{ type:"doughnut",
+      data:{labels:names,datasets:[{data,backgroundColor:colors,borderWidth:3,borderColor:ringColor,hoverOffset:6}]},
+      options:{cutout:"64%",responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},
+          datalabels:{display:c=>c.dataset.data[c.dataIndex]>0,color:"#fff",font:{size:11,weight:"800"},
+            formatter:v=> total>0?(v/total*100).toFixed(0)+"%":""},
+          pieCenterPlugin:{text:rp(total)},
+          tooltip:{callbacks:{label:c=>c.label+": "+rp(c.raw)+" ("+(total>0?pctStr(c.raw/total*100):"0%")+")"}}}},
+      plugins:[pieCenterPlugin] });
+  }
+  makePie("pieplan",plans,totalPlan);
+  makePie("pieReal",reals,totalReal);
+  const lg=document.getElementById("pieLegend"); lg.innerHTML="";
+  names.forEach((n,i)=>{ lg.innerHTML+=`<span class="item"><span class="dot" style="background:${colors[i]}"></span>${n}</span>`; });
+}
+
+/* ---- Pareto Plan terbesar per kategori (top 2 proyek, 3 diagram kecil) ---- */
 function renderParetoAll(){ ["JAR","KIT","TANAH"].forEach(renderPareto); }
 function renderPareto(code){
-  const items=RAW.filter(r=>r.code===code).map(r=>{ const v=rowVal(r); return {nama:r.nama,plan:v.plan}; })
-    .filter(x=>x.plan>0).sort((a,b)=>b.plan-a.plan).slice(0,7);
-  const total=items.reduce((s,x)=>s+x.plan,0);
-  let cum=0; const cumPct=items.map(x=>{ cum+=x.plan; return total>0?(cum/total*100):0; });
-  const labels=items.map(x=> x.nama.length>13? x.nama.slice(0,12)+"…":x.nama);
+  const all=RAW.filter(r=>r.code===code).map(r=>{ const v=rowVal(r); return {nama:r.nama,plan:v.plan}; }).filter(x=>x.plan>0);
+  const totalKategori=all.reduce((s,x)=>s+x.plan,0);
+  const items=all.slice().sort((a,b)=>b.plan-a.plan).slice(0,2);
+  let cum=0; const cumPct=items.map(x=>{ cum+=x.plan; return totalKategori>0?(cum/totalKategori*100):0; });
+  const labels=items.map(x=> x.nama.length>20? x.nama.slice(0,19)+"…":x.nama);
   const col=CONFIG.kategoriColor[CONFIG.kategoriMap[code]];
   const key="pareto"+code;
+  const subEl=document.getElementById(key+"sub");
+  if(subEl) subEl.textContent = all.length? ("Top "+items.length+" dari "+all.length+" proyek — "+pctStr(cumPct[cumPct.length-1]||0)+" dari total Plan kategori") : "Tidak ada data pada periode ini";
   if(charts[key])charts[key].destroy();
   const canvasEl=document.getElementById(key); if(!canvasEl) return;
+  const lineColor=isDarkMode()?"#E7EEF6":"#0E3A5C";
   charts[key]=new Chart(canvasEl,{
     data:{labels, datasets:[
-      {type:"bar",label:"Plan",data:items.map(x=>x.plan),backgroundColor:col,borderRadius:4,order:2,yAxisID:"y"},
-      {type:"line",label:"Kumulatif %",data:cumPct,borderColor:inkColor(),backgroundColor:inkColor(),borderWidth:2,pointRadius:3,pointBackgroundColor:inkColor(),tension:.25,order:1,yAxisID:"y1"}
+      {type:"bar",label:"Plan",data:items.map(x=>x.plan),backgroundColor:col,borderRadius:6,order:2,yAxisID:"y",
+        categoryPercentage:.5,barPercentage:.7,
+        datalabels:{display:items.length>0,anchor:"end",align:"top",color:inkColor(),font:{size:11,weight:"800"},formatter:v=>compact(v)}},
+      {type:"line",label:"Kumulatif %",data:cumPct,borderColor:lineColor,backgroundColor:lineColor,borderWidth:2,
+        pointRadius:4,pointBackgroundColor:lineColor,tension:.2,order:1,yAxisID:"y1",
+        datalabels:{display:items.length>0,align:"bottom",color:lineColor,font:{size:10,weight:"700"},formatter:v=>v.toFixed(1).replace(".",",")+"%"}}
     ]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},datalabels:{display:false},
-        tooltip:{callbacks:{label:c=> c.dataset.type==="line"? "Kumulatif: "+c.raw.toFixed(1).replace(".",",")+"%" : "Plan: "+rp(c.raw)}}},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:18,bottom:2}},
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=> c.dataset.type==="line"? "Kumulatif: "+c.raw.toFixed(1).replace(".",",")+"%" : "Plan: "+rpFull(c.raw),
+          title:it=>items[it[0].dataIndex]?items[it[0].dataIndex].nama:""}}},
       scales:{
-        x:{grid:{display:false},ticks:{font:{size:9.5},maxRotation:35,minRotation:35}},
+        x:{grid:{display:false},ticks:{font:{size:10.5,weight:"600"},maxRotation:0,minRotation:0,autoSkip:false}},
         y:{grid:{color:gridColor()},ticks:{callback:v=>compact(v),font:{size:10}}},
         y1:{position:"right",min:0,max:100,grid:{display:false},ticks:{callback:v=>v+"%",font:{size:10}}}
       }}
   });
-  if(!items.length){ /* biarkan chart kosong bila kategori tidak punya data pada periode ini */ }
 }
 
 /* Perbaikan #5: plugin lokal untuk menampilkan % Penyerapan di atas tiap pasang bar bulanan */
