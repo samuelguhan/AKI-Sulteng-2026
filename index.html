@@ -171,6 +171,7 @@ h1,h2,h3{font-family:var(--font)}
 .grid{display:grid;gap:14px}
 .g4{grid-template-columns:repeat(4,1fr)}
 .g2{grid-template-columns:1.05fr .95fr}
+.g3{grid-template-columns:repeat(3,1fr)}
 
 /* KPI */
 .kpi{position:relative;overflow:hidden}
@@ -180,21 +181,7 @@ h1,h2,h3{font-family:var(--font)}
 .kpi .value.p{color:var(--plan)} .kpi .value.r{color:var(--real)}
 .kpi .foot{font-size:11.5px;color:var(--muted);margin-top:8px}
 
-/* Progress */
-.prog-wrap{display:flex;align-items:center;gap:30px;flex-wrap:wrap}
-.donut-box{width:170px;height:170px;flex:none;position:relative}
-.prog-right{flex:1;min-width:230px}
-.prog-right .big{font-size:clamp(34px,6vw,52px);font-weight:900;color:var(--real);line-height:1}
-.prog-right .big small{font-size:13px;color:var(--muted);font-weight:600;display:block;margin-top:6px;letter-spacing:.3px}
-.pbar{height:14px;border-radius:999px;background:var(--line);overflow:hidden;margin:16px 0 6px;border:1px solid var(--line)}
-.pbar > i{display:block;height:100%;border-radius:999px;background:var(--real);transition:width 1s cubic-bezier(.2,.8,.2,1)}
-.prow{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;border-bottom:1px solid var(--line-2)}
-.prow:last-child{border-bottom:none}
-.prow .k{color:var(--ink-soft)} .prow .v{font-weight:700}
-.prow .v.p{color:var(--plan)} .prow .v.r{color:var(--real)}
-
 .chart-box{position:relative;width:100%;height:360px}
-.chart-box.cat{height:260px}
 
 /* ============================ TOP DISBURSEMENT (dirombak) ============================ */
 .top-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
@@ -251,17 +238,26 @@ table.sum tbody tr.total td{font-weight:800;color:var(--navy);border-top:2px sol
 .c-plan{color:var(--plan);font-weight:600} .c-real{color:var(--real);font-weight:600}
 .dotcat{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:8px;vertical-align:middle}
 
-/* exec */
+/* exec / status proyek */
 .exec-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 .exec .label{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
 .exec .val{font-size:clamp(17px,1.9vw,22px);font-weight:800;line-height:1}
 .exec .note{font-size:11.5px;color:var(--muted);margin-top:7px}
-.status{display:inline-flex;align-items:center;gap:8px}
+.status{display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:800}
 .status .dot{width:11px;height:11px;border-radius:50%}
 .s-green{color:var(--real)} .s-green .dot{background:var(--real)}
 .s-amber{color:var(--amber)} .s-amber .dot{background:var(--amber)}
 .s-red{color:var(--red)} .s-red .dot{background:var(--red)}
 .t-plan{color:var(--plan)} .t-navy{color:var(--navy)} .t-amber{color:var(--amber)}
+.exec-status-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+.exec-status-note{font-size:12.5px;color:var(--ink-soft);font-weight:600}
+.exec-status-help{font-size:12px;color:var(--muted);line-height:1.7;border-top:1px dashed var(--line);padding-top:10px}
+.exec-status-help b{color:var(--ink-soft)}
+
+/* pareto per kategori */
+.pareto-title{font-size:13px;font-weight:800;margin-bottom:8px}
+.pareto-box{height:220px}
+@media(max-width:900px){.g3{grid-template-columns:1fr}}
 
 /* ============================ FOOTER (contact) ============================ */
 .footer{margin:28px 0 14px;display:flex;justify-content:center}
@@ -284,7 +280,7 @@ table.sum tbody tr.total td{font-weight:800;color:var(--navy);border-top:2px sol
 .banner.load{border-color:#CFE0F2;color:var(--plan);background:#EFF6FC}
 .banner .retry{margin-left:8px;text-decoration:underline;cursor:pointer;color:var(--navy);font-weight:700}
 
-@media(max-width:1000px){.g4{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}.exec-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:1000px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr}}
 @media(max-width:600px){
   body{padding:11px}
   .header{flex-wrap:wrap;gap:12px;padding:16px 16px}
@@ -296,7 +292,7 @@ table.sum tbody tr.total td{font-weight:800;color:var(--navy);border-top:2px sol
   .subcard{min-width:0;width:100%}
   .foot-card{flex-wrap:wrap;border-radius:16px;justify-content:center;text-align:center}
 }
-@media(max-width:420px){.g4{grid-template-columns:1fr 1fr}.exec-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:420px){.g4{grid-template-columns:1fr 1fr}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media(max-width:600px){
   .filter-panel{left:0;right:0}
@@ -398,7 +394,6 @@ table.sum tbody tr.total td{font-weight:800;color:var(--navy);border-top:2px sol
     <div class="hero-card" id="heroCard">
       <div class="hero-glow"></div>
       <div class="hero-main">
-        <div class="hero-eyebrow">✦ Sorotan Utama</div>
         <div class="hero-title">Realisasi AKI Non-Rutin 2026</div>
         <div class="hero-value-row">
           <div class="hero-value" id="heroValue">Rp 0</div>
@@ -413,39 +408,6 @@ table.sum tbody tr.total td{font-weight:800;color:var(--navy);border-top:2px sol
       </div>
     </div>
   </div>
-
-  <!-- ============================ KPI ============================ -->
-  <div class="block"><div class="grid g4">
-    <div class="card kpi"><span class="bar" style="background:var(--plan)"></span>
-      <div class="label">Total Plan AKI</div><div class="value p" id="k_plan">—</div><div class="foot">Kebutuhan AKI</div></div>
-    <div class="card kpi"><span class="bar" style="background:var(--real)"></span>
-      <div class="label">Realisasi AKI</div><div class="value r" id="k_real">—</div><div class="foot">Penyerapan berjalan</div></div>
-    <div class="card kpi"><span class="bar" style="background:var(--navy)"></span>
-      <div class="label">Persentase Realisasi</div><div class="value" id="k_pct">—</div><div class="foot">Realisasi / Plan</div></div>
-    <div class="card kpi"><span class="bar" style="background:var(--amber)"></span>
-      <div class="label">Sisa Plan</div><div class="value t-amber" id="k_sisa">—</div><div class="foot">Belum terserap</div></div>
-  </div></div>
-
-  <!-- ============================ PROGRESS + CATEGORY ============================ -->
-  <div class="block"><div class="grid g2">
-    <div class="card">
-      <div class="block-title" style="margin-bottom:16px"><h2>Progress Penyerapan</h2></div>
-      <div class="prog-wrap">
-        <div class="donut-box"><canvas id="donut"></canvas></div>
-        <div class="prog-right">
-          <div class="big" id="bigPct">0%<small>Realisasi terhadap Plan AKI</small></div>
-          <div class="pbar"><i id="pbFill" style="width:0%"></i></div>
-          <div class="prow"><span class="k">Plan AKI</span><span class="v p" id="pr_plan">—</span></div>
-          <div class="prow"><span class="k">Realisasi</span><span class="v r" id="pr_real">—</span></div>
-          <div class="prow"><span class="k">Sisa</span><span class="v" id="pr_sisa">—</span></div>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="block-title" style="margin-bottom:6px"><h2>Perbandingan Kategori</h2><span class="desc">Plan vs Realisasi</span></div>
-      <div class="chart-box cat"><canvas id="catChart"></canvas></div>
-    </div>
-  </div></div>
 
   <!-- ============================ MONTHLY (grouped) ============================ -->
   <div class="block">
@@ -502,11 +464,44 @@ table.sum tbody tr.total td{font-weight:800;color:var(--navy);border-top:2px sol
     </table></div></div>
   </div>
 
-  <!-- ============================ EXEC ============================ -->
+  <!-- ============================ PARETO PLAN PER KATEGORI ============================ -->
   <div class="block">
-    <div class="block-title"><h2>Indikator Eksekutif</h2></div>
-    <div class="exec-grid" id="execGrid"></div>
+    <div class="block-title"><h2>Pareto Plan Terbesar per Kategori</h2>
+      <span class="desc">Proyek dengan porsi Plan penyerapan terbesar pada tiap kategori, diurutkan menurun + kumulatif %</span></div>
+    <div class="grid g3">
+      <div class="card"><div class="pareto-title" style="color:var(--plan)">Jaringan</div><div class="chart-box pareto-box"><canvas id="paretoJAR"></canvas></div></div>
+      <div class="card"><div class="pareto-title" style="color:var(--amber)">Pembangkit</div><div class="chart-box pareto-box"><canvas id="paretoKIT"></canvas></div></div>
+      <div class="card"><div class="pareto-title" style="color:var(--real)">Pertanahan</div><div class="chart-box pareto-box"><canvas id="paretoTANAH"></canvas></div></div>
+    </div>
   </div>
+
+  <!-- ============================ STATUS PROYEK ============================ -->
+  <div class="block">
+    <div class="block-title"><h2>Status Proyek</h2></div>
+    <div class="card">
+      <div class="exec-status-row">
+        <span class="status s-green" id="execStatusBadge"><span class="dot"></span>—</span>
+        <span class="exec-status-note" id="execStatusNote"></span>
+      </div>
+      <div class="exec-status-help">
+        <b>On Track</b> — realisasi sudah sesuai atau melampaui Plan kumulatif yang seharusnya dicapai s.d. bulan berjalan (≥90%).
+        <b>Perlu Perhatian</b> — capaian 70–90% dari target waktu berjalan.
+        <b>Tertinggal</b> — capaian di bawah 70% dari target waktu berjalan.
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ KPI (ringkasan akhir) ============================ -->
+  <div class="block"><div class="grid g4">
+    <div class="card kpi"><span class="bar" style="background:var(--plan)"></span>
+      <div class="label">Total Plan AKI</div><div class="value p" id="k_plan">—</div><div class="foot">Kebutuhan AKI</div></div>
+    <div class="card kpi"><span class="bar" style="background:var(--real)"></span>
+      <div class="label">Realisasi AKI</div><div class="value r" id="k_real">—</div><div class="foot">Penyerapan berjalan</div></div>
+    <div class="card kpi"><span class="bar" style="background:var(--navy)"></span>
+      <div class="label">Persentase Realisasi</div><div class="value" id="k_pct">—</div><div class="foot">Realisasi / Plan</div></div>
+    <div class="card kpi"><span class="bar" style="background:var(--amber)"></span>
+      <div class="label">Sisa Plan</div><div class="value t-amber" id="k_sisa">—</div><div class="foot">Belum terserap</div></div>
+  </div></div>
 
   <!-- ============================ EKSPOR / CETAK ============================ -->
   <div class="block">
@@ -532,9 +527,9 @@ table.sum tbody tr.total td{font-weight:800;color:var(--navy);border-top:2px sol
       <div class="foot-av"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
       <div class="foot-meta"><div class="cap">Created by</div><div class="nm">Samuel Guhan</div></div>
       <div class="foot-div"></div>
-      <a class="foot-mail" href="mailto:samuel.guhan@pln.co.id">
+      <a class="foot-mail" href="mailto:uppsulawesitengah@gmail.com">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-        samuel.guhan@pln.co.id
+        uppsulawesitengah@gmail.com
       </a>
     </div>
   </div>
@@ -594,13 +589,6 @@ function applyChartTheme(){
 applyChartTheme();
 if(darkMQ){ darkMQ.addEventListener ? darkMQ.addEventListener("change",()=>{ applyChartTheme(); if(RAW.length) renderAll(); })
   : darkMQ.addListener(()=>{ applyChartTheme(); if(RAW.length) renderAll(); }); }
-
-Chart.register({ id:"centerText", afterDraw(c,a,o){ if(!o||!o.text)return;
-  const {ctx,chartArea:{left,right,top,bottom}}=c; const x=(left+right)/2,y=(top+bottom)/2;
-  ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";
-  ctx.font="800 26px 'Source Sans 3',sans-serif";ctx.fillStyle=o.color||"#149E74";ctx.fillText(o.text,x,y-4);
-  ctx.font="600 10px 'Source Sans 3',sans-serif";ctx.fillStyle=mutedColor();ctx.fillText("Realisasi",x,y+16);
-  ctx.restore(); }});
 
 /* fetch */
 function loadData(){
@@ -682,42 +670,37 @@ function renderAll(){
   const kr=document.getElementById("k_real"); kr.textContent=rp(d.real); kr.title=rpFull(d.real);
   document.getElementById("k_pct").textContent=pctStr(d.pct);
   const ks=document.getElementById("k_sisa"); ks.textContent=rp(d.sisa); ks.title=rpFull(d.sisa);
-  document.getElementById("bigPct").innerHTML=pctStr(d.pct)+"<small>Realisasi terhadap Plan AKI</small>";
-  document.getElementById("pbFill").style.width=Math.min(d.pct,100)+"%";
-  document.getElementById("pr_plan").textContent=rp(d.plan);
-  document.getElementById("pr_real").textContent=rp(d.real);
-  document.getElementById("pr_sisa").textContent=rp(d.sisa);
-  makeDonut(d.real,d.sisa,pctStr(d.pct));
-  renderCategory(); renderMonthly(); renderTop(); renderTable(); renderExec(d); renderHero(d);
+  renderMonthly(); renderTop(); renderTable(); renderParetoAll(); renderExec(); renderHero(d);
   updateFilterSummary();
 }
 
-function makeDonut(real,sisa,label){
-  if(charts.donut)charts.donut.destroy();
-  charts.donut=new Chart(document.getElementById("donut"),{ type:"doughnut",
-    data:{labels:["Realisasi","Sisa"],datasets:[{data:[Math.max(real,0),Math.max(sisa,0)],
-      backgroundColor:["#149E74","#D6DEE8"],borderWidth:0,hoverOffset:3}]},
-    options:{cutout:"72%",responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},datalabels:{display:false},centerText:{text:label,color:"#149E74"},
-        tooltip:{callbacks:{label:c=>c.label+": "+rp(c.raw)}}}} });
-}
-
-function renderCategory(){
-  const order=["JAR","KIT","TANAH"], names=order.map(c=>CONFIG.kategoriMap[c]);
-  const plans=order.map(c=>aggregate(c).plan), reals=order.map(c=>aggregate(c).real);
-  const emph=c=> state.kategori==="ALL"||state.kategori===c?1:.35; const al=order.map(emph);
-  if(charts.cat)charts.cat.destroy();
-  charts.cat=new Chart(document.getElementById("catChart"),{ type:"bar",
-    data:{labels:names,datasets:[
-      {label:"Plan",data:plans,backgroundColor:order.map((c,i)=>`rgba(46,111,183,${al[i]})`),borderRadius:5,barPercentage:.9},
-      {label:"Realisasi",data:reals,backgroundColor:order.map((c,i)=>`rgba(20,158,116,${al[i]})`),borderRadius:5,barPercentage:.9}]},
-    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,layout:{padding:{right:54}},
-      plugins:{legend:{display:true,position:"top",align:"end",labels:{usePointStyle:true,pointStyle:"rectRounded",boxWidth:9,padding:14,font:{size:12,weight:"600"}}},
-        datalabels:{display:c=>c.dataset.data[c.dataIndex]>0,anchor:"end",align:"end",
-          color:c=>c.datasetIndex===0?"#2E6FB7":"#149E74",font:{size:10,weight:"700"},formatter:v=>compact(v)},
-        tooltip:{callbacks:{label:c=>c.dataset.label+": "+rpFull(c.raw)}}},
-      scales:{x:{grid:{color:gridColor()},ticks:{callback:v=>compact(v),font:{size:11}}},
-        y:{grid:{display:false},ticks:{font:{size:12,weight:"600"},color:inkColor()}}}} });
+/* ---- Pareto Plan terbesar per kategori (3 diagram kecil) ---- */
+function renderParetoAll(){ ["JAR","KIT","TANAH"].forEach(renderPareto); }
+function renderPareto(code){
+  const items=RAW.filter(r=>r.code===code).map(r=>{ const v=rowVal(r); return {nama:r.nama,plan:v.plan}; })
+    .filter(x=>x.plan>0).sort((a,b)=>b.plan-a.plan).slice(0,7);
+  const total=items.reduce((s,x)=>s+x.plan,0);
+  let cum=0; const cumPct=items.map(x=>{ cum+=x.plan; return total>0?(cum/total*100):0; });
+  const labels=items.map(x=> x.nama.length>13? x.nama.slice(0,12)+"…":x.nama);
+  const col=CONFIG.kategoriColor[CONFIG.kategoriMap[code]];
+  const key="pareto"+code;
+  if(charts[key])charts[key].destroy();
+  const canvasEl=document.getElementById(key); if(!canvasEl) return;
+  charts[key]=new Chart(canvasEl,{
+    data:{labels, datasets:[
+      {type:"bar",label:"Plan",data:items.map(x=>x.plan),backgroundColor:col,borderRadius:4,order:2,yAxisID:"y"},
+      {type:"line",label:"Kumulatif %",data:cumPct,borderColor:inkColor(),backgroundColor:inkColor(),borderWidth:2,pointRadius:3,pointBackgroundColor:inkColor(),tension:.25,order:1,yAxisID:"y1"}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},datalabels:{display:false},
+        tooltip:{callbacks:{label:c=> c.dataset.type==="line"? "Kumulatif: "+c.raw.toFixed(1).replace(".",",")+"%" : "Plan: "+rp(c.raw)}}},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:9.5},maxRotation:35,minRotation:35}},
+        y:{grid:{color:gridColor()},ticks:{callback:v=>compact(v),font:{size:10}}},
+        y1:{position:"right",min:0,max:100,grid:{display:false},ticks:{callback:v=>v+"%",font:{size:10}}}
+      }}
+  });
+  if(!items.length){ /* biarkan chart kosong bila kategori tidak punya data pada periode ini */ }
 }
 
 /* Perbaikan #5: plugin lokal untuk menampilkan % Penyerapan di atas tiap pasang bar bulanan */
@@ -822,21 +805,13 @@ function renderTable(){
   tb.innerHTML+=`<tr class="total"><td>TOTAL</td><td>${rpFull(tp)}</td><td>${rpFull(tr)}</td><td>${pctStr(pct(tr,tp))}</td><td>${rpFull(tp-tr)}</td></tr>`;
 }
 
-function renderExec(d){
-  const monthsIn = state.waktu==="overall"?12 : state.waktu==="month"?1 : 6;
-  const avg=d.real/monthsIn;
+function renderExec(){
   const ta=timeAwareStatus(state.kategori);
-  const items=[
-    {l:"Achievement Rate",v:pctStr(d.pct),n:"Realisasi / Plan — "+periodLabel(),cls:"t-navy"},
-    {l:"Sisa Anggaran",v:rp(d.sisa),n:"Belum terserap",cls:"t-amber"},
-    {l:"Rata-rata / Bulan",v:rp(avg),n:"Disbursement periode ini",cls:"t-plan"},
-    {l:"Status Proyek",v:`<span class="status s-${ta.st.c}"><span class="dot"></span>${ta.st.t}</span>`,
-      n:`Realisasi vs Plan s.d. ${ta.cutoffLabel}: ${pctStr(ta.ratio)}`,cls:""},
-  ];
-  const eg=document.getElementById("execGrid"); eg.innerHTML="";
-  items.forEach(it=>{ const el=document.createElement("div"); el.className="card exec";
-    el.innerHTML=`<div class="label">${it.l}</div><div class="val ${it.cls}">${it.v}</div><div class="note">${it.n}</div>`;
-    eg.appendChild(el); });
+  const badge=document.getElementById("execStatusBadge");
+  badge.className="status s-"+ta.st.c;
+  badge.innerHTML=`<span class="dot"></span>${ta.st.t}`;
+  document.getElementById("execStatusNote").textContent=
+    katLabel()+" — Realisasi vs Plan s.d. "+ta.cutoffLabel+": "+pctStr(ta.ratio);
 }
 
 /* ---- Perbaikan #2: Hero highlight "Realisasi AKI" — angka animasi + ring + mini kurva-S ---- */
