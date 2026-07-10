@@ -32,7 +32,7 @@
   --shadow-sm:0 1px 2px rgba(16,40,64,.06);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{-webkit-text-size-adjust:100%;text-size-adjust:100%;overflow-x:hidden}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{margin:0;padding:0}
 /* Perbaikan #4: sejumlah browser HP (Android/WebView tertentu) merender "Myriad Pro"
    dengan varian yang sangat tipis. Font TIDAK diganti — hanya ketebalan tampilan
@@ -709,33 +709,29 @@ function renderAll(){
 function renderStackedChart(){
   const order=["JAR","KIT","TANAH"];
   const names=order.map(c=>CONFIG.kategoriMap[c]);
-  const colors=order.map(c=>CONFIG.kategoriColor[CONFIG.kategoriMap[c]]);
-  const plans=order.map(c=>aggregate(c).plan), reals=order.map(c=>aggregate(c).real);
-  const totalPlan=plans.reduce((a,b)=>a+b,0), totalReal=reals.reduce((a,b)=>a+b,0);
-  const planPct=plans.map(v=> totalPlan>0? v/totalPlan*100 : 0);
-  const realPct=reals.map(v=> totalReal>0? v/totalReal*100 : 0);
-  const rawByCat=[plans,reals]; // [ [planJAR,planKIT,planTANAH], [realJAR,realKIT,realTANAH] ]
+  const catColors=order.map(c=>CONFIG.kategoriColor[CONFIG.kategoriMap[c]]);
+  const data=order.map(c=>aggregate(c));
+  const rawPlan=data.map(d=>d.plan), rawReal=data.map(d=>d.real), rawSisa=data.map(d=>d.sisa), rawPctActual=data.map(d=>d.pct);
+  const realPct=data.map(d=> d.plan>0? Math.min(d.real/d.plan*100,100) : (d.real>0?100:0));
+  const sisaPct=realPct.map(v=>Math.max(100-v,0));
+  const sisaColor=isDarkMode()?"#22344A":"#D6DEE8";
 
   if(charts.stacked)charts.stacked.destroy();
   charts.stacked=new Chart(document.getElementById("stackedChart"),{ type:"bar",
-    data:{labels:["Plan AKI","Realisasi AKI"],
-      datasets:order.map((c,i)=>({
-        label:names[i],
-        data:[planPct[i],realPct[i]],
-        backgroundColor:colors[i],
-        borderRadius:4,
-        stack:"s",
-        barPercentage:.55,
-        rawValues:[plans[i],reals[i]]
-      }))},
+    data:{labels:names,datasets:[
+      {label:"Realisasi",data:realPct,backgroundColor:catColors,stack:"s",borderRadius:4,barPercentage:.55,
+        datalabels:{display:c=>c.dataset.data[c.dataIndex]>=6,color:"#fff",font:{size:11,weight:"800"},formatter:(v)=>v.toFixed(0)+"%"}},
+      {label:"Sisa (belum terserap)",data:sisaPct,backgroundColor:sisaColor,stack:"s",borderRadius:4,barPercentage:.55,
+        datalabels:{display:c=>c.dataset.data[c.dataIndex]>=6,color:inkColor(),font:{size:11,weight:"700"},formatter:(v)=>v.toFixed(0)+"%"}}
+    ]},
     options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:true,position:"bottom",labels:{usePointStyle:true,pointStyle:"rectRounded",boxWidth:9,padding:14,font:{size:12,weight:"600"}}},
-        datalabels:{display:c=>c.dataset.data[c.dataIndex]>=6,color:"#fff",font:{size:11,weight:"800"},
-          formatter:(v)=>v.toFixed(0)+"%"},
-        tooltip:{callbacks:{label:c=>{
-          const raw=c.dataset.rawValues[c.dataIndex];
-          return c.dataset.label+": "+rp(raw)+" ("+c.raw.toFixed(1).replace(".",",")+"%)";
-        }}}},
+        tooltip:{callbacks:{
+          title:it=>names[it[0].dataIndex],
+          label:c=>{ const i=c.dataIndex;
+            if(c.datasetIndex===0) return "Realisasi: "+rp(rawReal[i])+" ("+rawPctActual[i].toFixed(1).replace(".",",")+"% dari Plan)";
+            return "Sisa: "+rp(rawSisa[i])+" — Plan "+names[i]+": "+rp(rawPlan[i]);
+          }}}},
       scales:{
         x:{stacked:true,min:0,max:100,grid:{color:gridColor()},ticks:{callback:v=>v+"%",font:{size:11}}},
         y:{stacked:true,grid:{display:false},ticks:{font:{size:12,weight:"700"},color:inkColor()}}
