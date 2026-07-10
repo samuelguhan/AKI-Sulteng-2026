@@ -13,6 +13,7 @@
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 
 <style>
 :root{
@@ -31,8 +32,14 @@
   --shadow-sm:0 1px 2px rgba(16,40,64,.06);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{margin:0;padding:0}
-body{font-family:var(--font);color:var(--ink);
+/* Perbaikan #4: sejumlah browser HP (Android/WebView tertentu) merender "Myriad Pro"
+   dengan varian yang sangat tipis. Font TIDAK diganti — hanya ketebalan tampilan
+   dinaikkan via smoothing + text-stroke tipis agar tetap mudah dibaca di perangkat tsb. */
+body{font-family:var(--font);color:var(--ink);font-weight:500;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;-webkit-text-stroke:.25px currentColor;
   background:radial-gradient(1100px 500px at 100% -5%, #E1EBF6, transparent 60%),
     linear-gradient(180deg,#F2F6FB,var(--bg));
   background-attachment:fixed;min-height:100vh;padding:18px;overflow-x:hidden;
@@ -73,10 +80,23 @@ h1,h2,h3{font-family:var(--font)}
 .refresh-btn.spin svg{animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ============================ FILTER BAR ============================ */
-.filters{position:sticky;top:8px;z-index:20;margin:16px 0;background:rgba(255,255,255,.93);
-  backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:var(--radius);
-  padding:12px 16px;box-shadow:var(--shadow);display:flex;flex-wrap:wrap;gap:18px 30px;align-items:center}
+/* ============================ FILTER BAR (ringkas + dropdown) ============================ */
+.filters{position:sticky;top:8px;z-index:30;margin:16px 0}
+.filter-toggle{display:flex;align-items:center;gap:10px;width:100%;cursor:pointer;
+  font-family:var(--font);background:rgba(255,255,255,.95);backdrop-filter:blur(8px);
+  border:1px solid var(--line);border-radius:999px;padding:12px 18px;box-shadow:var(--shadow);
+  font-size:13px;font-weight:700;color:var(--navy);transition:.15s}
+.filter-toggle:hover{border-color:var(--plan)}
+.filter-toggle .fico{flex:none;color:var(--plan);display:flex}
+.filter-toggle .fsummary{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.filter-toggle .fchev{flex:none;transition:transform .2s ease;color:var(--muted)}
+.filter-toggle[aria-expanded="true"] .fchev{transform:rotate(180deg)}
+.filter-panel{position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:31;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:0 16px;max-height:0;opacity:0;overflow:hidden;pointer-events:none;
+  transition:max-height .25s ease,opacity .18s ease,padding .25s ease;
+  display:flex;flex-wrap:wrap;gap:14px 26px;align-items:center}
+.filter-panel.open{max-height:420px;opacity:1;pointer-events:auto;padding:14px 16px}
 .fgroup{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .flabel{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
 .pills{display:flex;gap:6px;flex-wrap:wrap}
@@ -92,6 +112,52 @@ h1,h2,h3{font-family:var(--font)}
 .mpill.has-data{border-color:#BFE3D6}
 .mpill.has-data::after{content:"•";color:var(--real);margin-left:4px}
 .mpill.active.has-data::after{color:#fff}
+
+/* ============================ HERO REALISASI (highlight utama) ============================ */
+.hero-card{position:relative;overflow:hidden;border-radius:var(--radius);
+  background:linear-gradient(120deg,#0B3357 0%,#10527E 55%,#0E7C8B 120%);
+  padding:26px 30px;box-shadow:var(--shadow);display:flex;align-items:center;gap:30px;flex-wrap:wrap}
+.hero-card::after{content:"";position:absolute;inset:0;opacity:.10;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px);
+  background-size:36px 36px;
+  -webkit-mask-image:radial-gradient(120% 140% at 90% 0%,#000,transparent 70%);
+          mask-image:radial-gradient(120% 140% at 90% 0%,#000,transparent 70%)}
+.hero-glow{position:absolute;width:340px;height:340px;border-radius:50%;
+  background:radial-gradient(circle,rgba(244,183,64,.35),transparent 70%);
+  right:-70px;top:-90px;filter:blur(6px);animation:heroPulse 4.2s ease-in-out infinite}
+@keyframes heroPulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:.9;transform:scale(1.14)}}
+.hero-main{flex:1;min-width:260px;position:relative;z-index:1}
+.hero-eyebrow{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:7px}
+.hero-title{font-size:clamp(14px,1.8vw,17px);font-weight:700;color:#EAF4FB;margin-bottom:10px}
+.hero-value-row{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.hero-value{font-size:clamp(30px,6vw,52px);font-weight:900;line-height:1;letter-spacing:.2px;
+  background:linear-gradient(100deg,#F4B740,#FFF3D2,#F4B740);
+  background-size:220% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:shimmerText 3.2s linear infinite}
+@keyframes shimmerText{0%{background-position:0% center}100%{background-position:220% center}}
+.hero-trend{font-size:12.5px;font-weight:700;padding:4px 11px;border-radius:999px;background:rgba(255,255,255,.14);color:#EAF4FB;white-space:nowrap}
+.hero-trend.up{color:#9BEFCB}.hero-trend.down{color:#F5B2A8}
+.hero-sub{font-size:12.5px;color:#BFE0EE;margin-top:7px}
+.hero-sparkline{height:56px;margin-top:14px;max-width:440px}
+.hero-ring{position:relative;flex:none;width:150px;height:150px;z-index:1;
+  filter:drop-shadow(0 0 14px rgba(244,183,64,.35))}
+.hero-ring-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;pointer-events:none}
+.hero-ring-label span{font-size:23px;font-weight:900}
+.hero-ring-label small{font-size:10px;color:#BFE0EE;font-weight:700;letter-spacing:.4px;text-transform:uppercase;margin-top:2px}
+@media(prefers-reduced-motion:reduce){.hero-glow,.hero-value{animation:none}}
+
+/* ============================ EXPORT / CETAK ============================ */
+.export-row{display:flex;gap:14px;flex-wrap:wrap}
+.export-btn{display:inline-flex;align-items:center;gap:9px;font-family:var(--font);font-weight:700;font-size:13.5px;
+  cursor:pointer;padding:12px 20px;border-radius:11px;border:1px solid transparent;color:#fff;
+  box-shadow:var(--shadow-sm);transition:.15s ease}
+.export-btn:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.export-btn:active{transform:translateY(0)}
+.export-btn.pdf{background:linear-gradient(120deg,#0E3A5C,#10527E)}
+.export-btn.xlsx{background:linear-gradient(120deg,#149E74,#0E7C8B)}
+.export-btn:disabled{opacity:.6;cursor:wait;transform:none}
+.export-note{margin-top:12px;font-size:12px;color:var(--muted)}
 
 /* ============================ BLOCKS ============================ */
 .block{margin:20px 0}
@@ -232,6 +298,49 @@ table.sum tbody tr.total td{font-weight:800;color:var(--navy);border-top:2px sol
 }
 @media(max-width:420px){.g4{grid-template-columns:1fr 1fr}.exec-grid{grid-template-columns:1fr 1fr}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media(max-width:600px){
+  .filter-panel{left:0;right:0}
+  .hero-card{padding:20px 18px;gap:18px}
+  .hero-ring{width:120px;height:120px}
+  .export-row{flex-direction:column}
+  .export-btn{justify-content:center}
+}
+
+/* ============================ MODE MALAM (#7 — otomatis ikut pengaturan device) ============================ */
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#0A121C; --card:#101B29;
+    --ink:#E7EEF6; --ink-soft:#AEC0D6; --muted:#7E93AC;
+    --line:#22344A; --line-2:#1A2839;
+    --navy:#1E5C8C; --plan:#4F9EDE; --real:#2BC090; --sisa:#22344A;
+    --amber:#E3A542; --red:#E2695C; --gold:#F4B740; --teal:#22A6B8;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px rgba(0,0,0,.5);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.35);
+  }
+  body{background:radial-gradient(1100px 500px at 100% -5%, #142033, transparent 60%),
+      linear-gradient(180deg,#0B1420,var(--bg));}
+  .filter-toggle{background:rgba(16,27,41,.92);color:var(--ink)}
+  .pill,.mpill,.top-btn{background:var(--card);color:var(--ink-soft)}
+  .banner{background:#101B29;color:var(--ink);border-color:var(--line)}
+  .banner.err{background:#2A1512;color:#F0A99C;border-color:#5C332C}
+  .banner.load{background:#0F1E2C;color:#8FC7EA;border-color:#1E3A52}
+  table.sum tbody tr.total td,.top-table thead th{background:#152234}
+  .top-table tbody tr:hover{background:#132132}
+  table.sum tbody tr:hover{background:#132132}
+  .logo-chip{background:#fff}
+}
+
+/* ============================ CETAK / PDF (#6) ============================ */
+@media print{
+  .filters,.footer,.export-card,.refresh-btn,.banner{display:none!important}
+  body{background:#fff!important;padding:0;-webkit-text-stroke:0}
+  .card,.hero-card,.header{box-shadow:none!important}
+  .card{border:1px solid #ccc}
+  .header,.card,.hero-card,.subcard,table.sum tbody tr.total td{
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
+  .block{break-inside:avoid;margin:14px 0}
+  .top-scroll{max-height:none;overflow:visible}
+}
 </style>
 </head>
 <body>
@@ -253,29 +362,57 @@ table.sum tbody tr.total td{font-weight:800;color:var(--navy);border-top:2px sol
     </div>
   </div>
 
-  <!-- ============================ FILTERS ============================ -->
-  <div class="filters">
-    <div class="fgroup"><span class="flabel">Kategori</span>
-      <div class="pills" id="filKategori">
-        <button class="pill active" data-v="ALL">Overall</button>
-        <button class="pill" data-v="TANAH">Pertanahan</button>
-        <button class="pill" data-v="KIT">Pembangkit</button>
-        <button class="pill" data-v="JAR">Jaringan</button>
+  <!-- ============================ FILTERS (ringkas, dropdown saat ditekan) ============================ -->
+  <div class="filters" id="filterWrap">
+    <button class="filter-toggle" id="filterToggle" type="button" aria-expanded="false" aria-controls="filterPanel">
+      <span class="fico"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M7 12h10M10 19h4"/></svg></span>
+      <span class="fsummary" id="filterSummary">Semua Kategori · Overall (1 Tahun)</span>
+      <span class="fchev"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></span>
+    </button>
+    <div class="filter-panel" id="filterPanel">
+      <div class="fgroup"><span class="flabel">Kategori</span>
+        <div class="pills" id="filKategori">
+          <button class="pill active" data-v="ALL">Overall</button>
+          <button class="pill" data-v="TANAH">Pertanahan</button>
+          <button class="pill" data-v="KIT">Pembangkit</button>
+          <button class="pill" data-v="JAR">Jaringan</button>
+        </div>
       </div>
-    </div>
-    <div class="fgroup"><span class="flabel">Waktu</span>
-      <div class="pills" id="filWaktu">
-        <button class="pill" data-v="month">Per Bulan</button>
-        <button class="pill" data-v="sem1">Semester 1</button>
-        <button class="pill" data-v="sem2">Semester 2</button>
-        <button class="pill active" data-v="overall">Overall (1 Tahun)</button>
+      <div class="fgroup"><span class="flabel">Waktu</span>
+        <div class="pills" id="filWaktu">
+          <button class="pill" data-v="month">Per Bulan</button>
+          <button class="pill" data-v="sem1">Semester 1</button>
+          <button class="pill" data-v="sem2">Semester 2</button>
+          <button class="pill active" data-v="overall">Overall (1 Tahun)</button>
+        </div>
       </div>
+      <div class="monthsel" id="monthSel"></div>
     </div>
-    <div class="monthsel" id="monthSel"></div>
   </div>
 
   <div class="banner load show" id="banner">Memuat data dari Google Sheets…</div>
   <div class="context-note" id="contextNote"></div>
+
+  <!-- ============================ HERO: REALISASI AKI (highlight utama) ============================ -->
+  <div class="block">
+    <div class="hero-card" id="heroCard">
+      <div class="hero-glow"></div>
+      <div class="hero-main">
+        <div class="hero-eyebrow">✦ Sorotan Utama</div>
+        <div class="hero-title">Realisasi AKI Non-Rutin 2026</div>
+        <div class="hero-value-row">
+          <div class="hero-value" id="heroValue">Rp 0</div>
+          <span class="hero-trend" id="heroTrend" style="display:none"></span>
+        </div>
+        <div class="hero-sub" id="heroSub">memuat data…</div>
+        <div class="hero-sparkline"><canvas id="heroSpark"></canvas></div>
+      </div>
+      <div class="hero-ring">
+        <canvas id="heroRingChart"></canvas>
+        <div class="hero-ring-label"><span id="heroRingPct">0%</span><small>Realisasi</small></div>
+      </div>
+    </div>
+  </div>
 
   <!-- ============================ KPI ============================ -->
   <div class="block"><div class="grid g4">
@@ -371,6 +508,24 @@ table.sum tbody tr.total td{font-weight:800;color:var(--navy);border-top:2px sol
     <div class="exec-grid" id="execGrid"></div>
   </div>
 
+  <!-- ============================ EKSPOR / CETAK ============================ -->
+  <div class="block">
+    <div class="block-title"><h2>Ekspor &amp; Cetak</h2><span class="desc">Mengikuti filter Kategori/Waktu &amp; proyek yang sedang dipilih</span></div>
+    <div class="card export-card">
+      <div class="export-row">
+        <button class="export-btn pdf" id="btnExportPdf" type="button">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/><path d="M9 13h6M9 17h6"/></svg>
+          Cetak / Simpan PDF
+        </button>
+        <button class="export-btn xlsx" id="btnExportXlsx" type="button">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/><path d="m9 12 6 6M15 12l-6 6"/></svg>
+          Ekspor ke Excel
+        </button>
+      </div>
+      <div class="export-note">PDF mengambil tampilan dashboard saat ini (gunakan dialog cetak browser lalu pilih "Simpan sebagai PDF"). Excel berisi sheet Ringkasan Kategori, Bulanan, dan Top Disbursement — lengkap dengan grafik Plan vs Realisasi seperti di dashboard.</div>
+    </div>
+  </div>
+
   <!-- ============================ FOOTER ============================ -->
   <div class="footer">
     <div class="foot-card">
@@ -424,14 +579,27 @@ let state={ kategori:"ALL", waktu:"overall", month:0 };
 let charts={};
 Chart.register(ChartDataLabels);
 Chart.defaults.plugins.datalabels.display=false;
-Chart.defaults.color="#41556B";
 Chart.defaults.font.family="'Source Sans 3',system-ui,sans-serif";
+
+/* ---- Perbaikan #7: mode malam otomatis mengikuti pengaturan device ---- */
+const darkMQ = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+function isDarkMode(){ return !!(darkMQ && darkMQ.matches); }
+function gridColor(){ return isDarkMode()? "rgba(255,255,255,.08)":"#EEF2F7"; }
+function inkColor(){ return isDarkMode()? "#E7EEF6":"#0C2233"; }
+function mutedColor(){ return isDarkMode()? "#9FB3C8":"#8090A2"; }
+function applyChartTheme(){
+  Chart.defaults.color = isDarkMode()? "#AEC0D6":"#41556B";
+  Chart.defaults.borderColor = isDarkMode()? "#22344A":"#E3E9F1";
+}
+applyChartTheme();
+if(darkMQ){ darkMQ.addEventListener ? darkMQ.addEventListener("change",()=>{ applyChartTheme(); if(RAW.length) renderAll(); })
+  : darkMQ.addListener(()=>{ applyChartTheme(); if(RAW.length) renderAll(); }); }
 
 Chart.register({ id:"centerText", afterDraw(c,a,o){ if(!o||!o.text)return;
   const {ctx,chartArea:{left,right,top,bottom}}=c; const x=(left+right)/2,y=(top+bottom)/2;
   ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";
   ctx.font="800 26px 'Source Sans 3',sans-serif";ctx.fillStyle=o.color||"#149E74";ctx.fillText(o.text,x,y-4);
-  ctx.font="600 10px 'Source Sans 3',sans-serif";ctx.fillStyle="#8090A2";ctx.fillText("Realisasi",x,y+16);
+  ctx.font="600 10px 'Source Sans 3',sans-serif";ctx.fillStyle=mutedColor();ctx.fillText("Realisasi",x,y+16);
   ctx.restore(); }});
 
 /* fetch */
@@ -483,6 +651,27 @@ function periodLabel(){ if(state.waktu==="overall")return "Tahun 2026 (Jan–Des
   return CONFIG.bulanFull[state.month]+" 2026"; }
 function katLabel(){ return state.kategori==="ALL"?"Semua Kategori":CONFIG.kategoriMap[state.kategori]; }
 
+/* ---- Perbaikan #1: status Indikator Eksekutif berbasis WAKTU, bukan ambang mutlak ----
+   Realisasi dibandingkan dengan Plan yang SEHARUSNYA sudah tercapai s.d. bulan berjalan,
+   bukan dengan Plan setahun penuh. Jan dengan realisasi kecil jadi wajar selama sejalan
+   dengan Plan Jan; yang dinilai "Critical" hanya saat realisasi tertinggal dari Plan
+   kumulatif s.d. bulan ini. */
+function currentElapsedMonthIdx(){
+  const now=new Date();
+  if(now.getFullYear()===CONFIG.dataYear) return now.getMonth();
+  const g=Array(12).fill(0); RAW.forEach(r=>r.realM.forEach((v,i)=>g[i]+=v));
+  let last=-1; g.forEach((v,i)=>{ if(v>0) last=i; });
+  return last>=0?last:0;
+}
+function timeAwareStatus(kategori){
+  const idx=currentElapsedMonthIdx();
+  let planTD=0, realTD=0;
+  rowsFor(kategori).forEach(r=>{ planTD+=sum(r.planM,0,idx+1); realTD+=sum(r.realM,0,idx+1); });
+  const ratio = planTD>0 ? (realTD/planTD*100) : (realTD>0?100:100);
+  let st; if(ratio>=90) st={t:"On Track",c:"green"}; else if(ratio>=70) st={t:"Perlu Perhatian",c:"amber"}; else st={t:"Tertinggal",c:"red"};
+  return {ratio, planTD, realTD, cutoffLabel:CONFIG.bulanFull[idx], st};
+}
+
 /* render all */
 function renderAll(){
   document.getElementById("dataDate").textContent=new Date().toLocaleDateString("id-ID",{day:"2-digit",month:"long",year:"numeric"});
@@ -499,7 +688,8 @@ function renderAll(){
   document.getElementById("pr_real").textContent=rp(d.real);
   document.getElementById("pr_sisa").textContent=rp(d.sisa);
   makeDonut(d.real,d.sisa,pctStr(d.pct));
-  renderCategory(); renderMonthly(); renderTop(); renderTable(); renderExec(d);
+  renderCategory(); renderMonthly(); renderTop(); renderTable(); renderExec(d); renderHero(d);
+  updateFilterSummary();
 }
 
 function makeDonut(real,sisa,label){
@@ -526,9 +716,30 @@ function renderCategory(){
         datalabels:{display:c=>c.dataset.data[c.dataIndex]>0,anchor:"end",align:"end",
           color:c=>c.datasetIndex===0?"#2E6FB7":"#149E74",font:{size:10,weight:"700"},formatter:v=>compact(v)},
         tooltip:{callbacks:{label:c=>c.dataset.label+": "+rpFull(c.raw)}}},
-      scales:{x:{grid:{color:"#EEF2F7"},ticks:{callback:v=>compact(v),font:{size:11}}},
-        y:{grid:{display:false},ticks:{font:{size:12,weight:"600"},color:"#0C2233"}}}} });
+      scales:{x:{grid:{color:gridColor()},ticks:{callback:v=>compact(v),font:{size:11}}},
+        y:{grid:{display:false},ticks:{font:{size:12,weight:"600"},color:inkColor()}}}} });
 }
+
+/* Perbaikan #5: plugin lokal untuk menampilkan % Penyerapan di atas tiap pasang bar bulanan */
+function pct3Str(x){ return x.toFixed(3).replace(".",",")+"%"; }
+const monthlyPctPlugin = {
+  id:"monthlyPctPlugin",
+  afterDatasetsDraw(chart){
+    const meta0=chart.getDatasetMeta(0), meta1=chart.getDatasetMeta(1);
+    const ds0=chart.data.datasets[0].data, ds1=chart.data.datasets[1].data;
+    const {ctx}=chart;
+    ctx.save(); ctx.textAlign="center"; ctx.font="700 10.5px 'Source Sans 3',sans-serif"; ctx.fillStyle=inkColor();
+    meta0.data.forEach((bar,i)=>{
+      const p=ds0[i]||0, r=ds1[i]||0; if(p<=0 && r<=0) return;
+      const pv = p>0 ? (r/p*100) : (r>0?100:0);
+      const bar1=meta1.data[i];
+      const topY=Math.max(Math.min(bar.y, bar1?bar1.y:bar.y)-8, (chart.chartArea?chart.chartArea.top:0)+10);
+      const xPos = bar1 ? (bar.x+bar1.x)/2 : bar.x;
+      ctx.fillText(pct3Str(pv), xPos, topY);
+    });
+    ctx.restore();
+  }
+};
 
 /* monthly = grouped (berdampingan) + tooltip Plan/Realisasi/% */
 function renderMonthly(){
@@ -536,13 +747,15 @@ function renderMonthly(){
   const planM=Array(12).fill(0), realM=Array(12).fill(0);
   rows.forEach(r=>{ r.planM.forEach((v,i)=>planM[i]+=v); r.realM.forEach((v,i)=>realM[i]+=v); });
   document.getElementById("monthlyDesc").textContent=
-    "Kategori: "+katLabel()+" — biru = Plan, hijau = Realisasi (arahkan kursor untuk detail)";
+    "Kategori: "+katLabel()+" — biru = Plan, hijau = Realisasi, angka di atas bar = % Penyerapan (arahkan kursor untuk detail)";
   if(charts.monthly)charts.monthly.destroy();
+  const maxVal=Math.max(1,...planM,...realM);
   charts.monthly=new Chart(document.getElementById("monthlyChart"),{ type:"bar",
     data:{labels:CONFIG.bulan,datasets:[
       {label:"Plan",data:planM,backgroundColor:"rgba(46,111,183,.9)",borderRadius:5,categoryPercentage:.72,barPercentage:.9},
       {label:"Realisasi",data:realM,backgroundColor:"rgba(20,158,116,.95)",borderRadius:5,categoryPercentage:.72,barPercentage:.9}]},
     options:{responsive:true,maintainAspectRatio:false,
+      layout:{padding:{top:24}},
       interaction:{mode:"index",intersect:false},
       plugins:{legend:{display:true,position:"top",align:"end",labels:{usePointStyle:true,pointStyle:"rectRounded",boxWidth:9,padding:14,font:{size:12,weight:"600"}}},
         datalabels:{display:false},
@@ -551,9 +764,10 @@ function renderMonthly(){
             title:it=>CONFIG.bulanFull[it[0].dataIndex],
             label:c=>c.dataset.label+": "+rpFull(c.raw),
             afterBody:it=>{const i=it[0].dataIndex; const p=planM[i],r=realM[i];
-              return "% Tercapai: "+pctStr(pct(r,p));}}}},
+              return "% Penyerapan: "+pct3Str(p>0?(r/p*100):(r>0?100:0));}}}},
       scales:{x:{grid:{display:false},ticks:{font:{weight:"600"}}},
-        y:{grid:{color:"#EEF2F7"},ticks:{callback:v=>compact(v),font:{size:11}}}}} });
+        y:{suggestedMax:maxVal*1.18,grid:{color:gridColor()},ticks:{callback:v=>compact(v),font:{size:11}}}}},
+    plugins:[monthlyPctPlugin] });
 }
 
 /* ---- TOP DISBURSEMENT ---- */
@@ -611,17 +825,82 @@ function renderTable(){
 function renderExec(d){
   const monthsIn = state.waktu==="overall"?12 : state.waktu==="month"?1 : 6;
   const avg=d.real/monthsIn;
-  let st; if(d.pct>=75) st={t:"On Track",c:"green"}; else if(d.pct>=40) st={t:"Warning",c:"amber"}; else st={t:"Critical",c:"red"};
+  const ta=timeAwareStatus(state.kategori);
   const items=[
-    {l:"Achievement Rate",v:pctStr(d.pct),n:"Realisasi / Plan",cls:"t-navy"},
+    {l:"Achievement Rate",v:pctStr(d.pct),n:"Realisasi / Plan — "+periodLabel(),cls:"t-navy"},
     {l:"Sisa Anggaran",v:rp(d.sisa),n:"Belum terserap",cls:"t-amber"},
     {l:"Rata-rata / Bulan",v:rp(avg),n:"Disbursement periode ini",cls:"t-plan"},
-    {l:"Status Proyek",v:`<span class="status s-${st.c}"><span class="dot"></span>${st.t}</span>`,n:"Capaian penyerapan",cls:""},
+    {l:"Status Proyek",v:`<span class="status s-${ta.st.c}"><span class="dot"></span>${ta.st.t}</span>`,
+      n:`Realisasi vs Plan s.d. ${ta.cutoffLabel}: ${pctStr(ta.ratio)}`,cls:""},
   ];
   const eg=document.getElementById("execGrid"); eg.innerHTML="";
   items.forEach(it=>{ const el=document.createElement("div"); el.className="card exec";
     el.innerHTML=`<div class="label">${it.l}</div><div class="val ${it.cls}">${it.v}</div><div class="note">${it.n}</div>`;
     eg.appendChild(el); });
+}
+
+/* ---- Perbaikan #2: Hero highlight "Realisasi AKI" — angka animasi + ring + mini kurva-S ---- */
+let heroLastValue=0;
+function animateNumber(el,from,to,duration,fmt){
+  const start=performance.now();
+  function step(now){
+    const t=Math.min(1,(now-start)/duration);
+    const eased=1-Math.pow(1-t,3);
+    const val=from+(to-from)*eased;
+    el.textContent=fmt(val);
+    if(t<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+function renderHero(d){
+  const valueEl=document.getElementById("heroValue");
+  animateNumber(valueEl, heroLastValue, d.real, 900, v=>rp(v));
+  heroLastValue=d.real;
+  document.getElementById("heroSub").innerHTML=
+    pctStr(d.pct)+" dari Plan "+katLabel()+" ("+periodLabel()+") &middot; Sisa "+rp(d.sisa);
+
+  /* trend: bandingkan bulan berjalan vs bulan sebelumnya (hanya relevan pada mode Per Bulan) */
+  const trendEl=document.getElementById("heroTrend");
+  if(state.waktu==="month"){
+    const rows=rowsFor(state.kategori);
+    const g=Array(12).fill(0); rows.forEach(r=>r.realM.forEach((v,i)=>g[i]+=v));
+    let prevIdx=-1; for(let i=state.month-1;i>=0;i--){ if(g[i]>0){prevIdx=i;break;} }
+    if(prevIdx>=0){
+      const cur=g[state.month]||0, prev=g[prevIdx];
+      const diff=cur-prev, dpct= prev>0? (diff/prev*100) : (cur>0?100:0);
+      trendEl.style.display="inline-flex";
+      trendEl.className="hero-trend "+(diff>=0?"up":"down");
+      trendEl.textContent=(diff>=0?"▲ naik ":"▼ turun ")+Math.abs(dpct).toFixed(1).replace(".",",")+"% vs "+CONFIG.bulanFull[prevIdx];
+    } else { trendEl.style.display="none"; }
+  } else { trendEl.style.display="none"; }
+
+  makeHeroRing(d.pct);
+  makeHeroSpark();
+}
+function makeHeroRing(pctVal){
+  document.getElementById("heroRingPct").textContent=pctStr(pctVal);
+  if(charts.heroRing)charts.heroRing.destroy();
+  charts.heroRing=new Chart(document.getElementById("heroRingChart"),{ type:"doughnut",
+    data:{datasets:[{data:[Math.min(Math.max(pctVal,0),100),Math.max(100-pctVal,0)],
+      backgroundColor:["#F4B740","rgba(255,255,255,.16)"],borderWidth:0,hoverOffset:0}]},
+    options:{cutout:"76%",responsive:true,maintainAspectRatio:false,animation:{duration:900,easing:"easeOutCubic"},
+      plugins:{legend:{display:false},datalabels:{display:false},tooltip:{enabled:false}}} });
+}
+function makeHeroSpark(){
+  const rows=rowsFor(state.kategori);
+  const planM=Array(12).fill(0), realM=Array(12).fill(0);
+  rows.forEach(r=>{ r.planM.forEach((v,i)=>planM[i]+=v); r.realM.forEach((v,i)=>realM[i]+=v); });
+  let cp=0,cr=0; const cumPlan=planM.map(v=>cp+=v), cumReal=realM.map(v=>cr+=v);
+  if(charts.heroSpark)charts.heroSpark.destroy();
+  charts.heroSpark=new Chart(document.getElementById("heroSpark"),{ type:"line",
+    data:{labels:CONFIG.bulan,datasets:[
+      {label:"Plan kumulatif",data:cumPlan,borderColor:"rgba(255,255,255,.55)",borderDash:[4,3],borderWidth:1.5,pointRadius:0,tension:.35,fill:false},
+      {label:"Realisasi kumulatif",data:cumReal,borderColor:"#F4B740",backgroundColor:"rgba(244,183,64,.18)",borderWidth:2.5,pointRadius:0,tension:.35,fill:true}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:900},
+      plugins:{legend:{display:false},datalabels:{display:false},
+        tooltip:{callbacks:{title:it=>CONFIG.bulanFull[it[0].dataIndex],label:c=>c.dataset.label+": "+rp(c.raw)}}},
+      scales:{x:{display:false},y:{display:false}}} });
 }
 
 /* filters */
@@ -631,23 +910,261 @@ function buildMonthSel(){
   CONFIG.bulan.forEach((b,i)=>{ const el=document.createElement("button");
     el.className="mpill"+(g[i]>0?" has-data":"")+(i===state.month?" active":"");
     el.textContent=b; el.dataset.m=i;
-    el.onclick=()=>{ state.month=i; document.querySelectorAll("#monthSel .mpill").forEach(x=>x.classList.toggle("active",+x.dataset.m===i)); renderAll(); };
+    el.onclick=()=>{ state.month=i; document.querySelectorAll("#monthSel .mpill").forEach(x=>x.classList.toggle("active",+x.dataset.m===i));
+      renderAll(); openFilterPanel(false); };
     box.appendChild(el); });
 }
+
+/* ---- Perbaikan #3: ringkasan filter + buka/tutup panel dropdown ---- */
+function waktuLabel(){
+  if(state.waktu==="month") return "Per Bulan ("+CONFIG.bulan[state.month]+")";
+  if(state.waktu==="sem1") return "Semester 1";
+  if(state.waktu==="sem2") return "Semester 2";
+  return "Overall (1 Tahun)";
+}
+function updateFilterSummary(){
+  const el=document.getElementById("filterSummary"); if(el) el.textContent=katLabel()+" · "+waktuLabel();
+}
+function openFilterPanel(open){
+  const panel=document.getElementById("filterPanel"), btn=document.getElementById("filterToggle");
+  panel.classList.toggle("open",open); btn.setAttribute("aria-expanded",open?"true":"false");
+}
 function wireFilters(){
+  document.getElementById("filterToggle").addEventListener("click",e=>{
+    e.stopPropagation();
+    const open=!document.getElementById("filterPanel").classList.contains("open");
+    openFilterPanel(open);
+  });
+  document.getElementById("filterPanel").addEventListener("click",e=>e.stopPropagation());
+  document.addEventListener("click",e=>{
+    const wrap=document.getElementById("filterWrap");
+    if(wrap && !wrap.contains(e.target)) openFilterPanel(false);
+  });
   document.getElementById("filKategori").addEventListener("click",e=>{ const b=e.target.closest(".pill"); if(!b)return;
-    state.kategori=b.dataset.v; document.querySelectorAll("#filKategori .pill").forEach(x=>x.classList.toggle("active",x===b)); renderAll(); });
+    state.kategori=b.dataset.v; document.querySelectorAll("#filKategori .pill").forEach(x=>x.classList.toggle("active",x===b));
+    renderAll(); openFilterPanel(false); });
   document.getElementById("filWaktu").addEventListener("click",e=>{ const b=e.target.closest(".pill"); if(!b)return;
     state.waktu=b.dataset.v; document.querySelectorAll("#filWaktu .pill").forEach(x=>x.classList.toggle("active",x===b));
     const ms=document.getElementById("monthSel");
-    if(state.waktu==="month"){ ms.style.display="flex"; buildMonthSel(); } else ms.style.display="none";
-    renderAll(); });
+    if(state.waktu==="month"){ ms.style.display="flex"; buildMonthSel(); renderAll(); }
+    else { ms.style.display="none"; renderAll(); openFilterPanel(false); } });
   document.getElementById("topAll").addEventListener("click",()=>{ document.querySelectorAll("#topTbody .chk").forEach(cb=>{cb.checked=true;cb.closest("tr").classList.remove("off");}); updateSubtotal(); });
   document.getElementById("topNone").addEventListener("click",()=>{ document.querySelectorAll("#topTbody .chk").forEach(cb=>{cb.checked=false;cb.closest("tr").classList.add("off");}); updateSubtotal(); });
   document.getElementById("refreshBtn").addEventListener("click",loadData);
 }
 
-wireFilters(); loadData(); setInterval(loadData,CONFIG.refreshMs);
+/* ================= Perbaikan #6: EKSPOR PDF & EXCEL sesuai filter aktif ================= */
+function wireExport(){
+  document.getElementById("btnExportPdf").addEventListener("click",()=>window.print());
+  document.getElementById("btnExportXlsx").addEventListener("click",exportExcel);
+}
+
+/* ---- helper OOXML minimal (divalidasi via openpyxl & LibreOffice) ---- */
+function xlEsc(v){ return String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function xlStr(ref,val,s){ return `<c r="${ref}"${s!=null?` s="${s}"`:""} t="inlineStr"><is><t>${xlEsc(val)}</t></is></c>`; }
+function xlNum(ref,val,s){ const v=(typeof val==="number"&&isFinite(val))?val:0; return `<c r="${ref}"${s!=null?` s="${s}"`:""}><v>${v}</v></c>`; }
+function xlRow(r,cells){ return `<row r="${r}">${cells.join("")}</row>`; }
+
+const XLSX_CT=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+<Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+<Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>
+<Override PartName="/xl/drawings/drawing2.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>
+<Override PartName="/xl/charts/chart1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/>
+<Override PartName="/xl/charts/chart2.xml" ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/>
+<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
+</Types>`;
+const XLSX_ROOT_RELS=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+</Relationships>`;
+const XLSX_CORE=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:creator>Dashboard AKI Sulteng</dc:creator></cp:coreProperties>`;
+const XLSX_APP=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Dashboard AKI Sulteng</Application></Properties>`;
+const XLSX_WORKBOOK=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<sheets>
+<sheet name="Ringkasan Kategori" sheetId="1" r:id="rId1"/>
+<sheet name="Bulanan" sheetId="2" r:id="rId2"/>
+<sheet name="Top Disbursement" sheetId="3" r:id="rId3"/>
+</sheets>
+</workbook>`;
+const XLSX_WORKBOOK_RELS=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/>
+<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet3.xml"/>
+<Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`;
+const XLSX_STYLES=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<numFmts count="2">
+<numFmt numFmtId="164" formatCode="&quot;Rp&quot; #,##0"/>
+<numFmt numFmtId="165" formatCode="0.000%"/>
+</numFmts>
+<fonts count="3">
+<font><sz val="11"/><name val="Calibri"/></font>
+<font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>
+<font><b/><sz val="11"/><color rgb="FF0E3A5C"/><name val="Calibri"/></font>
+</fonts>
+<fills count="4">
+<fill><patternFill patternType="none"/></fill>
+<fill><patternFill patternType="gray125"/></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FF0E3A5C"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFEAF2FB"/><bgColor indexed="64"/></patternFill></fill>
+</fills>
+<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="7">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+<xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/>
+<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
+<xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
+<xf numFmtId="0" fontId="2" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1"/>
+<xf numFmtId="164" fontId="2" fillId="3" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1"/>
+<xf numFmtId="165" fontId="2" fillId="3" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1"/>
+</cellXfs>
+<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`;
+function xlSheetRels(drawingFile){ return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/${drawingFile}"/>
+</Relationships>`; }
+function xlDrawing(shapeId,shapeName){ return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<xdr:oneCellAnchor>
+<xdr:from><xdr:col>6</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>1</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from>
+<xdr:ext cx="6858000" cy="4114800"/>
+<xdr:graphicFrame macro="">
+<xdr:nvGraphicFramePr><xdr:cNvPr id="${shapeId}" name="${shapeName}"/><xdr:cNvGraphicFramePr/></xdr:nvGraphicFramePr>
+<xdr:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></xdr:xfrm>
+<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/chart"><c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" r:id="rId1"/></a:graphicData></a:graphic>
+</xdr:graphicFrame>
+<xdr:clientData/>
+</xdr:oneCellAnchor>
+</xdr:wsDr>`; }
+function xlDrawingRels(chartFile){ return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart" Target="../charts/${chartFile}"/>
+</Relationships>`; }
+function xlBarChart(o){
+  const q = o.sheetName.includes(" ") ? `'${o.sheetName}'` : o.sheetName;
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<c:chart>
+<c:title><c:tx><c:rich><a:bodyPr/><a:p><a:r><a:t>${xlEsc(o.title)}</a:t></a:r></a:p></c:rich></c:tx><c:overlay val="0"/></c:title>
+<c:plotArea><c:layout/>
+<c:barChart>
+<c:barDir val="col"/><c:grouping val="clustered"/>
+<c:ser><c:idx val="0"/><c:order val="0"/>
+<c:tx><c:strRef><c:f>${q}!${o.ser1Cell}</c:f><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>${xlEsc(o.ser1Name)}</c:v></c:pt></c:strCache></c:strRef></c:tx>
+<c:spPr><a:solidFill><a:srgbClr val="2E6FB7"/></a:solidFill></c:spPr>
+<c:cat><c:strRef><c:f>${q}!${o.catRange}</c:f></c:strRef></c:cat>
+<c:val><c:numRef><c:f>${q}!${o.ser1Range}</c:f></c:numRef></c:val>
+</c:ser>
+<c:ser><c:idx val="1"/><c:order val="1"/>
+<c:tx><c:strRef><c:f>${q}!${o.ser2Cell}</c:f><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>${xlEsc(o.ser2Name)}</c:v></c:pt></c:strCache></c:strRef></c:tx>
+<c:spPr><a:solidFill><a:srgbClr val="149E74"/></a:solidFill></c:spPr>
+<c:cat><c:strRef><c:f>${q}!${o.catRange}</c:f></c:strRef></c:cat>
+<c:val><c:numRef><c:f>${q}!${o.ser2Range}</c:f></c:numRef></c:val>
+</c:ser>
+<c:gapWidth val="${o.gapWidth}"/>
+<c:axId val="${o.axId1}"/><c:axId val="${o.axId2}"/>
+</c:barChart>
+<c:catAx><c:axId val="${o.axId1}"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:axPos val="b"/><c:majorTickMark val="none"/><c:minorTickMark val="none"/><c:crossAx val="${o.axId2}"/></c:catAx>
+<c:valAx><c:axId val="${o.axId2}"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:axPos val="l"/><c:majorGridlines/><c:majorTickMark val="none"/><c:minorTickMark val="none"/><c:crossAx val="${o.axId1}"/></c:valAx>
+</c:plotArea>
+<c:legend><c:legendPos val="b"/></c:legend>
+<c:plotVisOnly val="1"/>
+</c:chart>
+</c:chartSpace>`;
+}
+
+async function exportExcel(){
+  const btn=document.getElementById("btnExportXlsx"); const orig=btn.innerHTML;
+  btn.disabled=true; btn.textContent="Menyiapkan file…";
+  try{
+    if(!RAW.length) throw new Error("Data belum dimuat.");
+    const zip=new JSZip();
+    zip.file("[Content_Types].xml",XLSX_CT);
+    zip.file("_rels/.rels",XLSX_ROOT_RELS);
+    zip.file("docProps/core.xml",XLSX_CORE);
+    zip.file("docProps/app.xml",XLSX_APP);
+    zip.file("xl/workbook.xml",XLSX_WORKBOOK);
+    zip.file("xl/_rels/workbook.xml.rels",XLSX_WORKBOOK_RELS);
+    zip.file("xl/styles.xml",XLSX_STYLES);
+
+    /* Sheet 1: Ringkasan Kategori (selalu 3 kategori + TOTAL, sesuai filter Waktu aktif) */
+    const order=["JAR","KIT","TANAH"]; const rows1=[];
+    rows1.push(xlRow(1,[xlStr("A1","Kategori",1),xlStr("B1","Plan AKI (Rp)",1),xlStr("C1","Realisasi AKI (Rp)",1),xlStr("D1","% Realisasi",1),xlStr("E1","Sisa Plan (Rp)",1)]));
+    let tp=0,tr=0;
+    order.forEach((c,i)=>{ const a=aggregate(c); const r=i+2; tp+=a.plan; tr+=a.real;
+      rows1.push(xlRow(r,[xlStr(`A${r}`,CONFIG.kategoriMap[c]),xlNum(`B${r}`,a.plan,2),xlNum(`C${r}`,a.real,2),xlNum(`D${r}`,a.plan>0?a.real/a.plan:0,3),xlNum(`E${r}`,a.sisa,2)])); });
+    const tRow1=order.length+2, tpct1=tp>0?tr/tp:0;
+    rows1.push(xlRow(tRow1,[xlStr(`A${tRow1}`,"TOTAL",4),xlNum(`B${tRow1}`,tp,5),xlNum(`C${tRow1}`,tr,5),xlNum(`D${tRow1}`,tpct1,6),xlNum(`E${tRow1}`,tp-tr,5)]));
+    zip.file("xl/worksheets/sheet1.xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<dimension ref="A1:E${tRow1}"/><sheetData>${rows1.join("")}</sheetData><drawing r:id="rId1"/></worksheet>`);
+    zip.file("xl/worksheets/_rels/sheet1.xml.rels",xlSheetRels("drawing1.xml"));
+    zip.file("xl/drawings/drawing1.xml",xlDrawing(2,"Chart 1"));
+    zip.file("xl/drawings/_rels/drawing1.xml.rels",xlDrawingRels("chart1.xml"));
+    zip.file("xl/charts/chart1.xml",xlBarChart({title:"Plan vs Realisasi per Kategori — "+periodLabel(),sheetName:"Ringkasan Kategori",
+      catRange:"$A$2:$A$4",ser1Name:"Plan AKI (Rp)",ser1Range:"$B$2:$B$4",ser1Cell:"$B$1",
+      ser2Name:"Realisasi AKI (Rp)",ser2Range:"$C$2:$C$4",ser2Cell:"$C$1",axId1:111111111,axId2:222222222,gapWidth:120}));
+
+    /* Sheet 2: Bulanan (12 bulan, sesuai filter Kategori aktif) */
+    const rowsB=rowsFor(state.kategori);
+    const planM=Array(12).fill(0), realM=Array(12).fill(0);
+    rowsB.forEach(r=>{ r.planM.forEach((v,i)=>planM[i]+=v); r.realM.forEach((v,i)=>realM[i]+=v); });
+    const rows2=[xlRow(1,[xlStr("A1","Bulan",1),xlStr("B1","Plan (Rp)",1),xlStr("C1","Realisasi (Rp)",1),xlStr("D1","% Penyerapan",1)])];
+    CONFIG.bulanFull.forEach((b,i)=>{ const r=i+2; const p=planM[i],rl=realM[i];
+      rows2.push(xlRow(r,[xlStr(`A${r}`,CONFIG.bulan[i]),xlNum(`B${r}`,p,2),xlNum(`C${r}`,rl,2),xlNum(`D${r}`,p>0?rl/p:0,3)])); });
+    zip.file("xl/worksheets/sheet2.xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<dimension ref="A1:D13"/><sheetData>${rows2.join("")}</sheetData><drawing r:id="rId1"/></worksheet>`);
+    zip.file("xl/worksheets/_rels/sheet2.xml.rels",xlSheetRels("drawing2.xml"));
+    zip.file("xl/drawings/drawing2.xml",xlDrawing(3,"Chart 2"));
+    zip.file("xl/drawings/_rels/drawing2.xml.rels",xlDrawingRels("chart2.xml"));
+    zip.file("xl/charts/chart2.xml",xlBarChart({title:"Plan vs Realisasi per Bulan — "+katLabel(),sheetName:"Bulanan",
+      catRange:"$A$2:$A$13",ser1Name:"Plan (Rp)",ser1Range:"$B$2:$B$13",ser1Cell:"$B$1",
+      ser2Name:"Realisasi (Rp)",ser2Range:"$C$2:$C$13",ser2Cell:"$C$1",axId1:333333333,axId2:444444444,gapWidth:80}));
+
+    /* Sheet 3: Top Disbursement — hanya proyek yang dicentang di dashboard saat ini */
+    const checked=[]; document.querySelectorAll("#topTbody .chk").forEach(cb=>{ if(cb.checked) checked.push(topList[+cb.dataset.i]); });
+    const rows3=[xlRow(1,[xlStr("A1","Proyek",1),xlStr("B1","Uraian Pekerjaan",1),xlStr("C1","Plan (Rp)",1),xlStr("D1","Realisasi (Rp)",1),xlStr("E1","% Capaian",1)])];
+    let tp3=0,tr3=0;
+    checked.forEach((it,i)=>{ const r=i+2; tp3+=it.plan; tr3+=it.real;
+      rows3.push(xlRow(r,[xlStr(`A${r}`,it.nama),xlStr(`B${r}`,it.uraian),xlNum(`C${r}`,it.plan,2),xlNum(`D${r}`,it.real,2),xlNum(`E${r}`,it.plan>0?it.real/it.plan:0,3)])); });
+    const tRow3=checked.length+2, tpct3=tp3>0?tr3/tp3:0;
+    rows3.push(xlRow(tRow3,[xlStr(`A${tRow3}`,"TOTAL (dipilih)",4),xlStr(`B${tRow3}`,"",4),xlNum(`C${tRow3}`,tp3,5),xlNum(`D${tRow3}`,tr3,5),xlNum(`E${tRow3}`,tpct3,6)]));
+    zip.file("xl/worksheets/sheet3.xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<dimension ref="A1:E${tRow3}"/><sheetData>${rows3.join("")}</sheetData></worksheet>`);
+
+    const blob=await zip.generateAsync({type:"blob",mimeType:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    const namaFile="AKI_Sulteng_2026_"+katLabel().replace(/\s+/g,"")+"_"+state.waktu+(state.waktu==="month"?("_"+CONFIG.bulan[state.month]):"")+".xlsx";
+    a.href=url; a.download=namaFile; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
+  }catch(e){
+    alert("Gagal membuat file Excel: "+e.message);
+  }finally{
+    btn.disabled=false; btn.innerHTML=orig;
+  }
+}
+
+wireFilters(); wireExport(); loadData(); setInterval(loadData,CONFIG.refreshMs);
 </script>
 </body>
 </html>
